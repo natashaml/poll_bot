@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/proullon/ramsql/driver"
@@ -28,7 +29,6 @@ func randomString() string {
 }
 
 func newTestStorage() (*Storage, error) {
-
 	db, err := sql.Open("ramsql", randomString())
 	if err != nil {
 		return nil, err
@@ -58,6 +58,42 @@ func TestMapStorage(t *testing.T) {
 	s, err := newTestStorage()
 	require.NoError(t, err)
 	err = s.init()
+	require.NoError(t, err)
+
+	user, err := s.Obtain("12")
+	require.NoError(t, err)
+	require.Equal(t, user.Id, "12")
+	require.Equal(t, user.Age, 0)
+	user.Age = 16
+
+	user, err = s.Obtain("12")
+	require.NoError(t, err)
+	require.Equal(t, user.Id, "12")
+	require.Equal(t, user.Age, 16)
+
+	err = s.Persist("12")
+	require.NoError(t, err)
+
+	count, err := s.PersistCount()
+	require.NoError(t, err)
+	require.Equal(t, count, 1)
+
+	err = s.Persist("12")
+	require.NoError(t, err)
+
+	count, err = s.PersistCount()
+	require.NoError(t, err)
+	require.Equal(t, count, 1)
+}
+
+func TestRealStorage(t *testing.T) {
+	err := godotenv.Load()
+	require.NoError(t, err)
+
+	s, err := newStorage()
+	require.NoError(t, err)
+
+	err = s.Clear("12")
 	require.NoError(t, err)
 
 	user, err := s.Obtain("12")

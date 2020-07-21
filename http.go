@@ -11,7 +11,10 @@ import (
 )
 
 func serve(v *viber.Viber) error {
-	s := newStorage()
+	s, err := newStorage()
+	if err != nil {
+		return err
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handleMain(v, s, w, r)
@@ -32,7 +35,6 @@ func serve(v *viber.Viber) error {
 func isJSON(s []byte) bool {
 	var js map[string]interface{}
 	return json.Unmarshal(s, &js) == nil
-
 }
 
 func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Request) {
@@ -58,10 +60,6 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 		log.Printf("Error reading callback: %v", err)
 		http.Error(w, "can't parse body", http.StatusBadRequest)
 		return
-	}
-
-	if c.Event == "delivered" || c.Event == "seen" {
-
 	}
 
 	reply, err := generateReplyFor(s, c)

@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
+
+	_ "github.com/lib/pq"
 )
 
 type Storage struct {
@@ -12,25 +15,33 @@ type Storage struct {
 	db    *sql.DB
 }
 
-func newStorage() *Storage {
+func newStorage() (*Storage, error) {
+	connStr := os.Getenv("DB_CONNECTION")
+	if connStr == "" {
+		return nil, errors.New("DB_CONNECTION is empty")
+	}
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Storage{
 		users: sync.Map{},
-	}
+		db:    db,
+	}, nil
 }
 
 type StorageUser struct {
-	Id    string
-	Level int
-	Age   int
+	Id                  string
+	Level               int
+	ConversationStarted bool
+	Age                 int
 
 	Candidate string
 }
 
 func (s *Storage) Obtain(id string) (*StorageUser, error) {
-	user, err := s.fromCache(id)
-	if err != nil {
-		return nil, err
-	}
+	user := s.fromCache(id)
 	if user != nil {
 		return user, nil
 	}
@@ -48,12 +59,12 @@ func (s *Storage) Obtain(id string) (*StorageUser, error) {
 	return newUser, nil
 }
 
-func (s *Storage) fromCache(id string) (*StorageUser, error) {
+func (s *Storage) fromCache(id string) *StorageUser {
 	user, ok := s.users.Load(id)
 	if ok && user != nil {
-		return user.(*StorageUser), nil
+		return user.(*StorageUser)
 	}
-	return nil, nil
+	return nil
 }
 
 func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
@@ -72,6 +83,14 @@ func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (s *Storage) Clear(id string) error {
+	s.users.Delete(id)
+
+	sqlStatement := `DELETE FROM users WHERE id = $1;`
+	_, err := s.db.Exec(sqlStatement, id)
+	return err
 }
 
 func (s *Storage) PersistCount() (int, error) {
@@ -94,7 +113,7 @@ func (s *Storage) Persist(id string) error {
 		return errors.New("persistence not enabled")
 	}
 
-	user, err := s.fromCache(id)
+	user := s.fromCache(id)
 	if user == nil {
 		return fmt.Errorf("%v missed in cache", id)
 	}
@@ -102,7 +121,7 @@ func (s *Storage) Persist(id string) error {
 	sqlStatement := `SELECT COUNT(*) FROM users WHERE id = $1;`
 	row := s.db.QueryRow(sqlStatement, user.Id)
 	var count int
-	err = row.Scan(&count)
+	err := row.Scan(&count)
 	if err != nil {
 		return err
 	}

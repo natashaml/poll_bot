@@ -2,12 +2,19 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 )
 
 func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 	if c.Event == "delivered" || c.Event == "seen" {
 		return "", nil
+	}
+
+	if c.Message.Text == "clear" {
+		err := s.Clear(c.User.Id)
+		return fmt.Sprintf("Your storage cleared with %v", err), nil
 	}
 
 	storageUser, err := s.Obtain(c.User.Id)
@@ -16,13 +23,9 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 	}
 
 	if storageUser.Candidate != "" {
-		return "Вы уже проголосовали за " + storageUser.Candidate, nil
+		return "Вы уже проголосовали за " + strings.Title(storageUser.Candidate), nil
 	}
 
-	if c.Event == "subscribed" {
-		message := getMessageForLevel(storageUser.Level, c)
-		return message, nil
-	}
 	if c.Event == "message" {
 		message := analyseAnswer(storageUser, c)
 		if message != "" {
@@ -36,7 +39,18 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 		message = getMessageForLevel(storageUser.Level, c)
 		return message, nil
 	}
-	return "", errors.New("Unknown message")
+
+	if !storageUser.ConversationStarted {
+		message := getMessageForLevel(storageUser.Level, c)
+		storageUser.ConversationStarted = true
+		return message, nil
+	}
+
+	if c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" {
+		return "", nil
+	}
+
+	return "", fmt.Errorf("Unknown message %v", c.Event)
 }
 
 func getMessageForLevel(level int, c *ViberCallback) string {
@@ -62,7 +76,7 @@ func analyseAnswer(u *StorageUser, c *ViberCallback) string {
 		return ""
 	}
 	if level == 1 {
-		if c.Message.Text != "Да" {
+		if c.Message.Text != "да" {
 			return "Надо ответить да!"
 		}
 		return ""
