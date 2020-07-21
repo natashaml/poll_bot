@@ -6,7 +6,7 @@ import (
 )
 
 func knownNotMessageEvent(c *ViberCallback) bool {
-	return c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" || c.Event == "conversation_started"
+	return c.Event == "message" || c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" || c.Event == "conversation_started" || c.Event == "webhook"
 }
 
 type viberReply struct {
@@ -15,12 +15,8 @@ type viberReply struct {
 }
 
 func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error) {
-	if c.Event == "unsubscribed" {
-		return nil, nil
-	}
-
-	if c.Event == "delivered" || c.Event == "seen" {
-		return nil, nil
+	if !knownNotMessageEvent(c) {
+		return nil, fmt.Errorf("Unknown message %v", c.Event)
 	}
 
 	if c.Message.Text == "clear" {
@@ -63,8 +59,8 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	}
 
 	if !storageUser.ConversationStarted {
-		reply := getViberReplyForLevel(p, storageUser.Level, c)
 		storageUser.ConversationStarted = true
+		reply := getViberReplyForLevel(p, storageUser.Level, c)
 		_ = s.Persist(storageUser.Id)
 		if err != nil {
 			return nil, err
@@ -72,16 +68,12 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		return reply, nil
 	}
 
-	if knownNotMessageEvent(c) {
-		return nil, nil
-	}
-
 	return nil, fmt.Errorf("Unknown message %v", c.Event)
 }
 
 func getViberReplyForLevel(p poll, level int, c *ViberCallback) *viberReply {
 	item := p[level]
-	reply := viberReply{text: "Непонятно"}
+	reply := viberReply{text: fmt.Sprintf("Непонятно. Нет уровня %v в вопросах", level)}
 	if item != nil {
 		reply.text = item.question(c)
 		reply.options = item.possibleAnswers

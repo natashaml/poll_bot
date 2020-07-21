@@ -20,6 +20,9 @@ func generateOurPoll() poll {
 	item0 := pollItem{
 		level: 0,
 		question: func(c *ViberCallback) string {
+			if c.User.Name == "" {
+				return "Добро пожаловать."
+			}
 			return "Добрый день, " + c.User.Name + ". Добро пожаловать"
 		},
 	}
