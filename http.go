@@ -85,6 +85,9 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 func keyboardFromOptions(v *viber.Viber, options []string) *viber.Keyboard {
 	ret := v.NewKeyboard("#FFFFFF", true)
 	colSize := len(options)
+	if colSize > 6 {
+		colSize = 6
+	}
 	for _, opt := range options {
 		b := v.NewTextButton(colSize, 1, viber.Reply, opt, opt)
 		ret.AddButton(b)
