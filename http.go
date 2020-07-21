@@ -10,8 +10,10 @@ import (
 )
 
 func serve(v *viber.Viber) error {
+	s := newStorage()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handleMain(v, w, r)
+		handleMain(v, s, w, r)
 	})
 
 	port := os.Getenv("PORT")
@@ -26,7 +28,7 @@ func serve(v *viber.Viber) error {
 	return nil
 }
 
-func handleMain(v *viber.Viber, w http.ResponseWriter, r *http.Request) {
+func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -45,11 +47,11 @@ func handleMain(v *viber.Viber, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.Event == "subscribed" {
-		message := "Добрый день,  " + c.User.Name
-		v.SendTextMessage(c.User.Id, message)
-	} else if c.Event == "message" {
-		message := c.User.Name + ", Вы гражданин республики беларусь?"
-		v.SendTextMessage(c.User.Id, message)
+	reply, err := generateReplyFor(s, c)
+	if err != nil {
+		log.Printf("Error reading callback: %v", err)
+		http.NotFound(w, r)
+		return
 	}
+	v.SendTextMessage(c.User.Id, reply)
 }
