@@ -1,0 +1,46 @@
+package main
+
+import (
+	"encoding/json"
+)
+
+type Message struct {
+	Text string `json:"text,omitempty"`
+	Type string `json:"type,omitempty"`
+}
+
+type User struct {
+	Id   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+type ViberCallback struct {
+	Event string `json:"event,omitempty"`
+	User  User   `json:"user,omitempty"`
+
+	Message      Message `json:"message,omitempty"`
+	MessageToken int     `json:"message_token,omitempty"`
+}
+
+type ViberCallbackMessage struct {
+	User User `json:"sender,omitempty"`
+}
+
+func parseCallback(b []byte) (*ViberCallback, error) {
+	ret := &ViberCallback{}
+	err := json.Unmarshal(b, ret)
+	if err != nil {
+		return nil, err
+	}
+	if ret.Event != "message" {
+		return ret, nil
+	}
+	m := &ViberCallbackMessage{}
+	err = json.Unmarshal(b, m)
+	if err != nil {
+		return nil, err
+	}
+	ret.User = m.User
+
+	return ret, err
+}
