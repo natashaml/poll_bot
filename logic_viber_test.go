@@ -79,7 +79,9 @@ func TestUserFlow(t *testing.T) {
 	require.Equal(t, user.Age, "39")
 	require.Equal(t, user.Level, 3)
 
-	reply, err = generateReplyFor(p, s, newSeenCallback(t, userId))
+	seenCallback := newSeenCallback(t, userId)
+	require.Equal(t, seenCallback.User.Id, userId)
+	reply, err = generateReplyFor(p, s, seenCallback)
 	require.NoError(t, err)
 	require.Nil(t, reply)
 
@@ -106,11 +108,11 @@ func TestUserFlow(t *testing.T) {
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Вы уже проголосовали за Лукашенко")
+	require.Equal(t, reply.text, "Вы уже проголосовали за Александр Лукашенко")
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Вы уже проголосовали за Лукашенко")
+	require.Equal(t, reply.text, "Вы уже проголосовали за Александр Лукашенко")
 
 	subscribe := newSubscribeCallback(t, userId)
 	user, err = s.Obtain(userId)
@@ -154,16 +156,11 @@ func newTextCallback(t *testing.T, id string, text string) *ViberCallback {
 }
 
 func newSeenCallback(t *testing.T, id string) *ViberCallback {
-	c := &ViberCallback{
-		Event: "seen",
-		User: User{
-			Id: id,
-		},
-	}
-	b, err := json.Marshal(c)
-	require.NoError(t, err)
+	json := `{"event":"seen","user_id":"%s"}`
 
-	ret, err := parseCallback(b)
+	validJson := fmt.Sprintf(json, id)
+
+	ret, err := parseCallback([]byte(validJson))
 	require.NoError(t, err)
 
 	return ret

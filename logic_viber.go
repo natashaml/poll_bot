@@ -5,8 +5,13 @@ import (
 	"strings"
 )
 
-func knownNotMessageEvent(c *ViberCallback) bool {
-	return c.Event == "message" || c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" || c.Event == "conversation_started" || c.Event == "webhook"
+func knownEvent(c *ViberCallback) bool {
+	return c.Event == "message" ||
+		c.Event == "delivered" ||
+		c.Event == "seen" ||
+		c.Event == "subscribed" ||
+		c.Event == "conversation_started" ||
+		c.Event == "webhook"
 }
 
 type viberReply struct {
@@ -15,7 +20,7 @@ type viberReply struct {
 }
 
 func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error) {
-	if !knownNotMessageEvent(c) {
+	if !knownEvent(c) {
 		return nil, fmt.Errorf("Unknown message %v", c.Event)
 	}
 
@@ -68,7 +73,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		return reply, nil
 	}
 
-	return nil, fmt.Errorf("Unknown message %v", c.Event)
+	return nil, nil
 }
 
 func getViberReplyForLevel(p poll, level int, c *ViberCallback) *viberReply {

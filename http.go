@@ -69,7 +69,6 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 		return
 	}
 	if reply != nil {
-		log.Printf("Got reply %v", *reply)
 		message := v.NewTextMessage(reply.text)
 		if len(reply.options) > 0 {
 			message.SetKeyboard(keyboardFromOptions(v, reply.options))
