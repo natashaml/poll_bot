@@ -62,6 +62,11 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 		return
 	}
 
+	// we need it for subscribe
+	if c.Event == "webhook" {
+		return
+	}
+
 	reply, err := generateReplyFor(p, s, c)
 	if err != nil {
 		log.Printf("Error generating reply: %v for input %v", err, string(bytes))
