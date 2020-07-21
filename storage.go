@@ -1,35 +1,28 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
-	"os"
+	"log"
 	"sync"
 
 	_ "github.com/lib/pq"
 )
 
 type Storage struct {
-	users sync.Map
-	db    *sql.DB
+	users      sync.Map
+	persistent *persistenseStorage
 }
 
 func newStorage() (*Storage, error) {
-	connStr := os.Getenv("DB_CONNECTION")
-	if connStr == "" {
-		return nil, errors.New("DB_CONNECTION is empty")
-	}
-	db, err := sql.Open("postgres", connStr)
+	persistent, err := newPersistenseStorage()
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(2)
-
 	return &Storage{
-		users: sync.Map{},
-		db:    db,
+		users:      sync.Map{},
+		persistent: persistent,
 	}, nil
 }
 
@@ -81,48 +74,45 @@ func (s *Storage) fromCache(id string) *StorageUser {
 }
 
 func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
-	if s.db == nil {
+	if s.persistent == nil {
 		return nil, errors.New("persistence not enabled")
 	}
-
-	sqlStatement := `SELECT id, level, conversation_started, age, candidate FROM users WHERE id = $1;`
-	var user StorageUser
-	row := s.db.QueryRow(sqlStatement, id)
-	err := row.Scan(&user.Id, &user.Level, &user.ConversationStarted, &user.Age, &user.Candidate)
-	if err == sql.ErrNoRows {
+	user, err := s.persistent.load(id)
+	if err != nil {
+		log.Printf("Unable to load persistent user %v", err)
 		return nil, nil
 	}
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	return user, nil
 }
 
 func (s *Storage) Clear(id string) error {
 	s.users.Delete(id)
 
-	sqlStatement := `DELETE FROM users WHERE id = $1;`
-	_, err := s.db.Exec(sqlStatement, id)
-	return err
+	err := s.persistent.clear(id)
+	if err != nil {
+		log.Printf("Unable to clear persistent user %v", err)
+		return nil
+	}
+
+	return nil
 }
 
 func (s *Storage) PersistCount() (int, error) {
-	if s.db == nil {
+	if s.persistent == nil {
 		return 0, errors.New("persistence not enabled")
 	}
 
-	sqlStatement := `SELECT COUNT(*) FROM users;`
-	row := s.db.QueryRow(sqlStatement)
-	var count int
-	err := row.Scan(&count)
+	count, err := s.persistent.count()
 	if err != nil {
-		return 0, err
+		log.Printf("Unable to count persistent user %v", err)
+		return 0, nil
 	}
+
 	return count, nil
 }
 
 func (s *Storage) Persist(id string) error {
-	if s.db == nil {
+	if s.persistent == nil {
 		return errors.New("persistence not enabled")
 	}
 
@@ -131,20 +121,11 @@ func (s *Storage) Persist(id string) error {
 		return fmt.Errorf("%v missed in cache", id)
 	}
 
-	sqlStatement := `SELECT COUNT(*) FROM users WHERE id = $1;`
-	row := s.db.QueryRow(sqlStatement, user.Id)
-	var count int
-	err := row.Scan(&count)
+	err := s.persistent.save(user)
 	if err != nil {
-		return err
+		log.Printf("Unable to save persistent user %v", err)
+		return nil
 	}
 
-	if count == 0 {
-		sqlStatement = `INSERT INTO users (id, level, conversation_started, age, candidate) VALUES ($1, $2, $3, $4, $5)`
-		_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
-		return err
-	}
-	sqlStatement = `UPDATE users SET level=$2, conversation_started=$3, age=$4, candidate=$5 WHERE id = $1`
-	_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
-	return err
+	return nil
 }
