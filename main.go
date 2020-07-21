@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -8,7 +9,10 @@ import (
 )
 
 func main() {
-
+	err := execute()
+	if err != nil {
+		log.Fatal(err)
+	}
 	<-make(chan int)
 }
 
@@ -18,9 +22,10 @@ func execute() error {
 		return err
 	}
 
-	s3Bucket := os.Getenv("VIBER_KEY")
+	viberKey := os.Getenv("VIBER_KEY")
 	callback_URL := os.Getenv("CALLBACK_URL")
-	v := viber.New(callback_URL, "Voting bot", "https://thumbs.dreamstime.com/z/human-hand-write-yes-vote-voting-paper-pen-flat-concept-illustration-man-s-red-pen-ballot-check-sign-88802664.jpg")
+	v := viber.New(viberKey, "Voting bot", "https://thumbs.dreamstime.com/z/human-hand-write-yes-vote-voting-paper-pen-flat-concept-illustration-man-s-red-pen-ballot-check-sign-88802664.jpg")
 	go serve(v)
-	v.SetWebhook("callback_URL, nil)
+	v.SetWebhook(callback_URL, nil)
+	return nil
 }
