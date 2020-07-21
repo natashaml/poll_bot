@@ -59,3 +59,21 @@ func TestParseViberSubscribe(t *testing.T) {
 	require.Equal(t, m.Event, "subscribed")
 	require.Equal(t, m.User.Id, "01234567890A=")
 }
+
+const deliveryCallback = `{"event":"delivered","timestamp":1595324677891,"chat_hostname":"SN-CHAT-02_","message_token":5466297578174182639,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
+
+func TestParseViberDeliveryCallback(t *testing.T) {
+	m, err := parseCallback([]byte(deliveryCallback))
+	require.NoError(t, err)
+	require.Equal(t, m.Event, "delivered")
+	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
+}
+
+const seenCallback = ` {"event":"seen","timestamp":1595324652811,"chat_hostname":"SN-CHAT-02_","message_token":5466297467809468529,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
+
+func TestParseViberSeenCallback(t *testing.T) {
+	m, err := parseCallback([]byte(seenCallback))
+	require.NoError(t, err)
+	require.Equal(t, m.Event, "seen")
+	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
+}

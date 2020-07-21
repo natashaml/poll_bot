@@ -1,29 +1,50 @@
 package main
 
+import (
+	"sync"
+)
+
 type Storage struct {
-	users map[string]*StorageUser
+	users sync.Map
 }
 
 func newStorage() *Storage {
 	return &Storage{
-		users: map[string]*StorageUser{},
+		users: sync.Map{},
 	}
 }
 
 type StorageUser struct {
-	Id        string
-	Level     int
-	Age       int
+	Id    string
+	Level int
+	Age   int
+
 	Candidate string
 }
 
 func (s *Storage) Obtain(id string) (*StorageUser, error) {
-	user := s.users[id]
-	if user != nil {
-		return user, nil
+	user, ok := s.users.Load(id)
+	if ok && user != nil {
+		return user.(*StorageUser), nil
 	}
-	user = &StorageUser{Id: id}
-	s.users[id] = user
+	persistedUser, err := s.fromPersisted(id)
+	if err != nil {
+		return nil, err
+	}
+	if persistedUser != nil {
+		return persistedUser, nil
+	}
 
-	return user, nil
+	newUser := &StorageUser{Id: id}
+	s.users.Store(id, newUser)
+
+	return newUser, nil
+}
+
+func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
+	return nil, nil
+}
+
+func (s *Storage) Persist(id string) error {
+	return nil
 }

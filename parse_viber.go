@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type Message struct {
@@ -26,21 +27,37 @@ type ViberCallbackMessage struct {
 	User User `json:"sender,omitempty"`
 }
 
+type ViberSeenMessage struct {
+	UserId string `json:"user_id,omitempty"`
+}
+
 func parseCallback(b []byte) (*ViberCallback, error) {
 	ret := &ViberCallback{}
 	err := json.Unmarshal(b, ret)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invalid json: %v", err)
 	}
-	if ret.Event != "message" {
+	if ret.Event == "subscribed" {
 		return ret, nil
 	}
-	m := &ViberCallbackMessage{}
-	err = json.Unmarshal(b, m)
-	if err != nil {
-		return nil, err
+	if ret.Event == "message" {
+		m := &ViberCallbackMessage{}
+		err = json.Unmarshal(b, m)
+		if err != nil {
+			return nil, err
+		}
+		ret.User = m.User
+		return ret, err
 	}
-	ret.User = m.User
+	if ret.Event == "delivered" || ret.Event == "seen" {
+		m := &ViberSeenMessage{}
+		err = json.Unmarshal(b, m)
+		if err != nil {
+			return nil, err
+		}
+		ret.User.Id = m.UserId
+		return ret, err
+	}
 
 	return ret, err
 }

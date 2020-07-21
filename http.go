@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,6 +29,12 @@ func serve(v *viber.Viber) error {
 	return nil
 }
 
+func isJSON(s []byte) bool {
+	var js map[string]interface{}
+	return json.Unmarshal(s, &js) == nil
+
+}
+
 func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -39,6 +46,11 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
+	if !isJSON(bytes) {
+		http.Error(w, "Not json response", http.StatusBadRequest)
+		return
+	}
+
 	log.Printf("Request body: %v", string(bytes))
 
 	c, err := parseCallback(bytes)
@@ -48,11 +60,17 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if c.Event == "delivered" || c.Event == "seen" {
+
+	}
+
 	reply, err := generateReplyFor(s, c)
 	if err != nil {
 		log.Printf("Error generating reply: %v", err)
 		http.Error(w, "can't reply", http.StatusBadRequest)
 		return
 	}
-	v.SendTextMessage(c.User.Id, reply)
+	if reply != "" {
+		v.SendTextMessage(c.User.Id, reply)
+	}
 }

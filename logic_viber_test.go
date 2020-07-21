@@ -32,6 +32,10 @@ func TestUserFlow(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, reply, "Укажите вас регион?")
 
+	reply, err = generateReplyFor(s, newSeenCallback("123"))
+	require.NoError(t, err)
+	require.Equal(t, reply, "")
+
 	reply, err = generateReplyFor(s, newTextCallback("123", "Берлин"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Какой ваш кандидат?")
@@ -47,6 +51,10 @@ func TestUserFlow(t *testing.T) {
 	reply, err = generateReplyFor(s, newSubscribeCallback("123"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы уже проголосовали за Лукашенко")
+
+	reply, err = generateReplyFor(s, newSeenCallback("123"))
+	require.NoError(t, err)
+	require.Equal(t, reply, "")
 }
 
 func newSubscribeCallback(id string) *ViberCallback {
@@ -68,6 +76,15 @@ func newTextCallback(id string, text string) *ViberCallback {
 		},
 		Message: Message{
 			Text: text,
+		},
+	}
+}
+
+func newSeenCallback(id string) *ViberCallback {
+	return &ViberCallback{
+		Event: "seen",
+		User: User{
+			Id: id,
 		},
 	}
 }

@@ -6,6 +6,10 @@ import (
 )
 
 func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
+	if c.Event == "delivered" || c.Event == "seen" {
+		return "", nil
+	}
+
 	storageUser, err := s.Obtain(c.User.Id)
 	if err != nil {
 		return "", err
