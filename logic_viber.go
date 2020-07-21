@@ -45,7 +45,8 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			reply.text = err.Error() + " " + reply.text
 			return reply, nil
 		}
-		if storageUser.Level == len(p) {
+		storageUser.Level++
+		if storageUser.Level >= len(p) {
 			_ = s.Persist(storageUser.Id)
 			if err != nil {
 				return nil, err
@@ -54,7 +55,6 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			return &viberReply{text: "Спасибо за голосование!"}, nil
 		}
 
-		storageUser.Level++
 		_ = s.Persist(storageUser.Id)
 		if err != nil {
 			return nil, err
