@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -19,7 +20,7 @@ func main() {
 func execute() error {
 	err := godotenv.Load()
 	if err != nil {
-		return err
+		return fmt.Errorf("Problem with .env file: %v", err)
 	}
 
 	viberKey := os.Getenv("VIBER_KEY")

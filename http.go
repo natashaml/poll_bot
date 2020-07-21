@@ -39,18 +39,19 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Request body: %v", string(bytes))
 
 	c, err := parseCallback(bytes)
 	if err != nil {
 		log.Printf("Error reading callback: %v", err)
-		http.NotFound(w, r)
+		http.Error(w, "can't parse body", http.StatusBadRequest)
 		return
 	}
 
 	reply, err := generateReplyFor(s, c)
 	if err != nil {
-		log.Printf("Error reading callback: %v", err)
-		http.NotFound(w, r)
+		log.Printf("Error generating reply: %v", err)
+		http.Error(w, "can't reply", http.StatusBadRequest)
 		return
 	}
 	v.SendTextMessage(c.User.Id, reply)
