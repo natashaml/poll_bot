@@ -28,15 +28,25 @@ func randomString() string {
 	return str
 }
 
-func newTestStorage() (*Storage, error) {
+func newTestPersistenseStorage() (*persistenseStorage, error) {
 	db, err := sql.Open("ramsql", randomString())
+	if err != nil {
+		return nil, err
+	}
+	return &persistenseStorage{
+		db: db,
+	}, nil
+}
+
+func newTestStorage() (*Storage, error) {
+	persistenseStorage, err := newTestPersistenseStorage()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Storage{
-		users: sync.Map{},
-		db:    db,
+		users:      sync.Map{},
+		persistent: persistenseStorage,
 	}, nil
 }
 
@@ -46,7 +56,7 @@ func (s *Storage) init() error {
 	}
 
 	for _, b := range batch {
-		_, err := s.db.Exec(b)
+		_, err := s.persistent.db.Exec(b)
 		if err != nil {
 			return err
 		}
@@ -64,7 +74,7 @@ func TestMapStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Age, 0)
-	user.Age = 16
+	user.Age = "16"
 
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
@@ -100,7 +110,7 @@ func TestRealStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Age, 0)
-	user.Age = 16
+	user.Age = "16"
 
 	user, err = s.Obtain("12")
 	require.NoError(t, err)

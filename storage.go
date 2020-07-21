@@ -30,7 +30,9 @@ type StorageUser struct {
 	Id                  string
 	Level               int
 	ConversationStarted bool
-	Age                 int
+	Age                 string
+	WillTakePart        string
+	WhenVote            string
 
 	Candidate string
 }

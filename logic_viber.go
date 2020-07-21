@@ -44,7 +44,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			reply.text = err.Error() + " " + reply.text
 			return reply, nil
 		}
-		if storageUser.Level == 4 {
+		if storageUser.Level == len(p)+1 {
 			_ = s.Persist(storageUser.Id)
 			if err != nil {
 				return nil, err

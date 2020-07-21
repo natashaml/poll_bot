@@ -49,7 +49,7 @@ func generateOurPoll() poll {
 		validateAnswer: func(answer string) error {
 			i, err := strconv.Atoi(answer)
 			if err != nil {
-				return err
+				return nil
 			}
 			if i < 18 {
 				return errors.New("Вам должно быть 18 или больше.")
@@ -57,11 +57,7 @@ func generateOurPoll() poll {
 			return nil
 		},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			i, err := strconv.Atoi(answer)
-			if err != nil {
-				return err
-			}
-			u.Age = i
+			u.Age = answer
 			return nil
 		},
 	}
@@ -72,7 +68,11 @@ func generateOurPoll() poll {
 		question: func(c *ViberCallback) string {
 			return "Примете ли Вы участие в предстоящих выборах Президента?"
 		},
-		possibleAnswers: []string{"Да, приму обязательно", "Да, скорее приму", "Нет, скорее не приму", " Нет, не приму", "Затрудняюсь ответить"},
+		possibleAnswers: []string{"Да, приму обязательно", "Да, скорее приму", "Нет, скорее не приму", "Нет, не приму", "Затрудняюсь ответить"},
+		persistAnswer: func(answer string, u *StorageUser) error {
+			u.WillTakePart = answer
+			return nil
+		},
 	}
 	ret[item3.level] = &item3
 
@@ -81,12 +81,26 @@ func generateOurPoll() poll {
 		question: func(c *ViberCallback) string {
 			return "Когда Вы планируете голосовать?"
 		},
+		possibleAnswers: []string{"Досрочно", "В основной день", "Затрудняюсь ответить"},
+		persistAnswer: func(answer string, u *StorageUser) error {
+			u.WhenVote = answer
+			return nil
+		},
+	}
+	ret[item4.level] = &item4
+
+	item5 := pollItem{
+		level: 5,
+		question: func(c *ViberCallback) string {
+			return "За кого Вы планируете проголосовать?"
+		},
+		possibleAnswers: []string{"Александр Лукашенко", "Сергей Черечень", "Анна Канопацкая", "Андрей Дмитриев", "Светлана Тихановская", "Против всех", "Затрудняюсь ответить"},
 		persistAnswer: func(answer string, u *StorageUser) error {
 			u.Candidate = answer
 			return nil
 		},
 	}
-	ret[item4.level] = &item4
+	ret[item5.level] = &item5
 
 	return ret
 }
