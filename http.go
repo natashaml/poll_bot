@@ -68,7 +68,25 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 		http.Error(w, "can't reply", http.StatusBadRequest)
 		return
 	}
-	if reply != "" {
-		v.SendTextMessage(c.User.Id, reply)
+	if reply != nil {
+		message := v.NewTextMessage(reply.text)
+		if len(reply.options) > 0 {
+			message.SetKeyboard(keyboardFromOptions(v, reply.options))
+		}
+		_, err = v.SendMessage(c.User.Id, message)
+		if err != nil {
+			log.Printf("Error sending message %v", err)
+			http.Error(w, "can't reply", http.StatusBadRequest)
+			return
+		}
 	}
+}
+
+func keyboardFromOptions(v *viber.Viber, options []string) *viber.Keyboard {
+	ret := v.NewKeyboard("black", true)
+	for _, opt := range options {
+		b := v.NewTextButton(1, 1, viber.Reply, opt, opt)
+		ret.AddButton(b)
+	}
+	return ret
 }
