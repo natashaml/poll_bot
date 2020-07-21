@@ -33,6 +33,8 @@ type StorageUser struct {
 	Age                 string
 	WillTakePart        string
 	WhenVote            string
+	Gender              string
+	Education           string
 
 	Candidate string
 }

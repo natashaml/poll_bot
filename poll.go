@@ -105,5 +105,31 @@ func generateOurPoll() poll {
 	}
 	ret[item5.level] = &item5
 
+	item6 := pollItem{
+		level: 6,
+		question: func(c *ViberCallback) string {
+			return "Укажите, пожалуйста, Ваш пол"
+		},
+		possibleAnswers: []string{"Мужской", "Женский"},
+		persistAnswer: func(answer string, u *StorageUser) error {
+			u.Gender = answer
+			return nil
+		},
+	}
+	ret[item6.level] = &item6
+
+	item7 := pollItem{
+		level: 7,
+		question: func(c *ViberCallback) string {
+			return "Ваш уровень образования?"
+		},
+		possibleAnswers: []string{"Среднее общее (школа)", "Профессионально-техническое", "Среднее специальное (техникум, колледж)", "Неполное высшее", "Высшее, ученая степень"},
+		persistAnswer: func(answer string, u *StorageUser) error {
+			u.Education = answer
+			return nil
+		},
+	}
+	ret[item7.level] = &item7
+
 	return ret
 }

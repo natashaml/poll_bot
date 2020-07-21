@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"strings"
+	"log"
 )
 
 func knownEvent(c *ViberCallback) bool {
@@ -35,9 +35,9 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	}
 
 	if c.Event == "message" {
-		if storageUser.Candidate != "" {
-			return &viberReply{text: "Вы уже проголосовали за " + strings.Title(storageUser.Candidate)}, nil
-		}
+		//if storageUser.Candidate != "" {
+		//	return &viberReply{text: "Вы уже проголосовали за " + strings.Title(storageUser.Candidate)}, nil
+		//}
 
 		err := analyseAnswer(p, storageUser, c)
 		if err != nil {
@@ -45,7 +45,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			reply.text = err.Error() + " " + reply.text
 			return reply, nil
 		}
-		if storageUser.Level == len(p)+1 {
+		if storageUser.Level == len(p) {
 			_ = s.Persist(storageUser.Id)
 			if err != nil {
 				return nil, err
@@ -77,6 +77,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 }
 
 func getViberReplyForLevel(p poll, level int, c *ViberCallback) *viberReply {
+	log.Printf("getViberReplyForLevel for level %v", level)
 	item := p[level]
 	reply := viberReply{text: fmt.Sprintf("Непонятно. Нет уровня %v в вопросах", level)}
 	if item != nil {

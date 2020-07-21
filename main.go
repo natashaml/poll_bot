@@ -32,6 +32,6 @@ func execute() error {
 			log.Fatal(err)
 		}
 	}()
-	v.SetWebhook(callback_URL, nil)
-	return nil
+	_, err = v.SetWebhook(callback_URL, nil)
+	return err
 }
