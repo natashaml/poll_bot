@@ -18,10 +18,9 @@ func execute() error {
 		return err
 	}
 
-	viberKey := os.Getenv("VIBER_KEY")
-	callbackURL := os.Getenv("CALLBACK_URL")
-	v := viber.New(viberKey, "Voting bot", "https://thumbs.dreamstime.com/z/human-hand-write-yes-vote-voting-paper-pen-flat-concept-illustration-man-s-red-pen-ballot-check-sign-88802664.jpg")
+	s3Bucket := os.Getenv("VIBER_KEY")
+	callback_URL := os.Getenv("CALLBACK_URL")
+	v := viber.New(callback_URL, "Voting bot", "https://thumbs.dreamstime.com/z/human-hand-write-yes-vote-voting-paper-pen-flat-concept-illustration-man-s-red-pen-ballot-check-sign-88802664.jpg")
 	go serve(v)
-	_, err = v.SetWebhook(callbackURL, nil)
-	return err
+	v.SetWebhook("callback_URL, nil)
 }

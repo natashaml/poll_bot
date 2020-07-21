@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
 )
 
 func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
@@ -11,15 +11,23 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 		return "", err
 	}
 
+	if storageUser.Candidate != "" {
+		return "Вы уже проголосовали за " + storageUser.Candidate, nil
+	}
+
 	if c.Event == "subscribed" {
 		message := getMessageForLevel(storageUser.Level, c)
 		return message, nil
 	}
 	if c.Event == "message" {
-		message := analyseAnswer(storageUser.Level, c)
+		message := analyseAnswer(storageUser, c)
 		if message != "" {
 			return message, nil
 		}
+		if storageUser.Level == 4 {
+			return "Спасибо за голосование!", nil
+		}
+
 		storageUser.Level++
 		message = getMessageForLevel(storageUser.Level, c)
 		return message, nil
@@ -43,16 +51,39 @@ func getMessageForLevel(level int, c *ViberCallback) string {
 	}
 }
 
-func analyseAnswer(level int, c *ViberCallback) string {
+func analyseAnswer(u *StorageUser, c *ViberCallback) string {
+	level := u.Level
+
 	if level == 0 {
 		return ""
 	}
-	fmt.Println(c.Message.Text)
-	if level == 1 && c.Message.Text != "Да" {
-		return "Надо ответить да!"
+	if level == 1 {
+		if c.Message.Text != "Да" {
+			return "Надо ответить да!"
+		}
+		return ""
 	}
-	if level == 2 && c.Message.Text != "Да" {
-		return "Надо больше 18!"
+	if level == 2 {
+		age, err := analyseAge(c.Message.Text)
+		if err != nil {
+			return "Вам должно быть 18 или больше"
+		}
+		u.Age = age
+		return ""
 	}
-	return "Непоятно"
+	if level == 4 {
+		u.Candidate = c.Message.Text
+	}
+	return ""
+}
+
+func analyseAge(age string) (int, error) {
+	i, err := strconv.Atoi(age)
+	if err != nil {
+		return 0, nil
+	}
+	if i < 18 {
+		return 0, errors.New("Вам должно быть 18 или больше")
+	}
+	return i, nil
 }

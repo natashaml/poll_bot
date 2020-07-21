@@ -11,8 +11,10 @@ func newStorage() *Storage {
 }
 
 type StorageUser struct {
-	Id    string
-	Level int
+	Id        string
+	Level     int
+	Age       int
+	Candidate string
 }
 
 func (s *Storage) Obtain(id string) (*StorageUser, error) {
