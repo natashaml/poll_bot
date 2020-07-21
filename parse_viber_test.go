@@ -37,6 +37,7 @@ func TestParseViberMessage(t *testing.T) {
 	require.Equal(t, m.Message.Type, "text")
 	require.Equal(t, m.Message.Text, "a message to the service")
 	require.Equal(t, m.User.Id, "01234567890A=")
+	require.Equal(t, m.User.Name, "John McClane")
 }
 
 const subscribeMessage = `{
@@ -58,6 +59,7 @@ func TestParseViberSubscribe(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, m.Event, "subscribed")
 	require.Equal(t, m.User.Id, "01234567890A=")
+	require.Equal(t, m.User.Name, "John McClane")
 }
 
 const deliveryCallback = `{"event":"delivered","timestamp":1595324677891,"chat_hostname":"SN-CHAT-02_","message_token":5466297578174182639,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
@@ -69,11 +71,21 @@ func TestParseViberDeliveryCallback(t *testing.T) {
 	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
 }
 
-const seenCallback = ` {"event":"seen","timestamp":1595324652811,"chat_hostname":"SN-CHAT-02_","message_token":5466297467809468529,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
+const seenCallback = `{"event":"seen","timestamp":1595324652811,"chat_hostname":"SN-CHAT-02_","message_token":5466297467809468529,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
 
 func TestParseViberSeenCallback(t *testing.T) {
 	m, err := parseCallback([]byte(seenCallback))
 	require.NoError(t, err)
 	require.Equal(t, m.Event, "seen")
 	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
+}
+
+const conversationStarted = `{"event":"conversation_started","timestamp":1595339165214,"chat_hostname":"SN-376_","message_token":5466358343372472277,"type":"open","user":{"id":"3SQNc4FPUQmysaM/AQEhXg==","name":"Georgy Buranov","avatar":"https://media-direct.cdn.viber.com/download_photo?dlid=3QCUHWfeZ7PCaNtLgR9MjzkImEDqnrC5TWKLxsKqFozLDTzy63xrDEoC8iXw3dfX3SDEkhAwWQn3QsmE6vkxGeaGyoWpDtWX2-_yyjQgGr12c3kkAfbVhPGsuUNSk6V5oReBtg&fltp=jpg&imsz=0000","language":"en-CA","country":"DE","api_version":8},"subscribed":false}`
+
+func TestParseConversationStartedCallback(t *testing.T) {
+	m, err := parseCallback([]byte(conversationStarted))
+	require.NoError(t, err)
+	require.Equal(t, m.Event, "conversation_started")
+	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
+	require.Equal(t, m.User.Name, "Georgy Buranov")
 }

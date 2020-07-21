@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,15 +14,19 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 	err = s.init()
 	require.NoError(t, err)
 
-	reply, err := generateReplyFor(s, newSubscribeCallback(t, "123"))
+	userId := "123"
+
+	reply, err := generateReplyFor(s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Добрый день, Vasya. Добро пожаловать")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Привет"))
+	text := newTextCallback(t, userId, "Привет")
+	require.Equal(t, text.User.Id, userId)
+	reply, err = generateReplyFor(s, text)
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы гражданин республики Беларусь?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "да"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "да"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Ващ возраст?")
 }
@@ -32,55 +37,75 @@ func TestUserFlow(t *testing.T) {
 	err = s.init()
 	require.NoError(t, err)
 
-	reply, err := generateReplyFor(s, newSubscribeCallback(t, "123"))
+	userId := "123"
+
+	reply, err := generateReplyFor(s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Добрый день, Vasya. Добро пожаловать")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Привет"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Привет"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы гражданин республики Беларусь?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Нет"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Нет"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Надо ответить да!")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Да"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Да"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Ващ возраст?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "16"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "16"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вам должно быть 18 или больше")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "39"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "39"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Укажите вас регион?")
 
-	reply, err = generateReplyFor(s, newSeenCallback(t, "123"))
+	user, err := s.fromPersisted(userId)
+	require.NoError(t, err)
+
+	require.Equal(t, user.Id, userId)
+	require.Equal(t, user.Age, 39)
+	require.Equal(t, user.Level, 3)
+
+	reply, err = generateReplyFor(s, newSeenCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Берлин"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Берлин"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Какой ваш кандидат?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Лукашенко"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Лукашенко"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Спасибо за голосование!")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Передумал"))
+	user, err = s.fromPersisted(userId)
+	require.NoError(t, err)
+
+	require.Equal(t, user.Id, userId)
+	require.Equal(t, user.Age, 39)
+	require.Equal(t, user.Level, 4)
+	require.Equal(t, user.Candidate, "лукашенко")
+
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы уже проголосовали за Лукашенко")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, "123", "Передумал"))
+	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы уже проголосовали за Лукашенко")
 
-	reply, err = generateReplyFor(s, newSubscribeCallback(t, "123"))
+	subscribe := newSubscribeCallback(t, userId)
+	user, err = s.Obtain(userId)
+	require.NoError(t, err)
+	reply, err = generateReplyFor(s, subscribe)
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 
-	reply, err = generateReplyFor(s, newSeenCallback(t, "123"))
+	reply, err = generateReplyFor(s, newSeenCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 }
@@ -104,20 +129,11 @@ func newSubscribeCallback(t *testing.T, id string) *ViberCallback {
 }
 
 func newTextCallback(t *testing.T, id string, text string) *ViberCallback {
-	c := &ViberCallback{
-		Event: "message",
-		User: User{
-			Id:   id,
-			Name: "Vasya",
-		},
-		Message: Message{
-			Text: text,
-		},
-	}
-	b, err := json.Marshal(c)
-	require.NoError(t, err)
+	json := `{"event":"message","sender":{"id":"%s","Name":"Vasya"},"message":{"type":"text","text":"%s"}}`
 
-	ret, err := parseCallback(b)
+	validJson := fmt.Sprintf(json, id, text)
+
+	ret, err := parseCallback([]byte(validJson))
 	require.NoError(t, err)
 
 	return ret

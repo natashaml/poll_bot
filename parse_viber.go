@@ -38,11 +38,10 @@ func parseCallback(b []byte) (*ViberCallback, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Invalid json: %v", err)
 	}
-	if ret.Event == "subscribed" {
+	if ret.Event == "subscribed" || ret.Event == "conversation_started" {
 		return ret, nil
 	}
 	if ret.Event == "message" {
-		fmt.Println("message")
 		m := &ViberCallbackMessage{}
 		err = json.Unmarshal(b, m)
 		if err != nil {
@@ -50,7 +49,6 @@ func parseCallback(b []byte) (*ViberCallback, error) {
 		}
 		ret.User = m.User
 		ret.Message.Text = strings.ToLower(ret.Message.Text)
-		fmt.Println(ret.Message.Text)
 		return ret, err
 	}
 	if ret.Event == "delivered" || ret.Event == "seen" {

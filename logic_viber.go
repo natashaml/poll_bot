@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+func knownNotMessageEvent(c *ViberCallback) bool {
+	return c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" || c.Event == "conversation_started"
+}
+
 func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 	if c.Event == "delivered" || c.Event == "seen" {
 		return "", nil
@@ -22,20 +26,29 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 		return "", err
 	}
 
-	if storageUser.Candidate != "" {
-		return "Вы уже проголосовали за " + strings.Title(storageUser.Candidate), nil
-	}
-
 	if c.Event == "message" {
+		if storageUser.Candidate != "" {
+			return "Вы уже проголосовали за " + strings.Title(storageUser.Candidate), nil
+		}
+
 		message := analyseAnswer(storageUser, c)
 		if message != "" {
 			return message, nil
 		}
 		if storageUser.Level == 4 {
+			err = s.Persist(storageUser.Id)
+			if err != nil {
+				return "", err
+			}
+
 			return "Спасибо за голосование!", nil
 		}
 
 		storageUser.Level++
+		err = s.Persist(storageUser.Id)
+		if err != nil {
+			return "", err
+		}
 		message = getMessageForLevel(storageUser.Level, c)
 		return message, nil
 	}
@@ -43,10 +56,14 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 	if !storageUser.ConversationStarted {
 		message := getMessageForLevel(storageUser.Level, c)
 		storageUser.ConversationStarted = true
+		err = s.Persist(storageUser.Id)
+		if err != nil {
+			return "", err
+		}
 		return message, nil
 	}
 
-	if c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" {
+	if knownNotMessageEvent(c) {
 		return "", nil
 	}
 

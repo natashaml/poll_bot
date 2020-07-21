@@ -42,7 +42,7 @@ func newTestStorage() (*Storage, error) {
 
 func (s *Storage) init() error {
 	batch := []string{
-		`CREATE TABLE users (id TEXT PRIMARY KEY, level INT, age INT, candidate TEXT);`,
+		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age INT, candidate TEXT);`,
 	}
 
 	for _, b := range batch {

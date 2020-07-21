@@ -53,8 +53,6 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	log.Printf("Request body: %v", string(bytes))
-
 	c, err := parseCallback(bytes)
 	if err != nil {
 		log.Printf("Error reading callback: %v", err)

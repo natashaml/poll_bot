@@ -25,6 +25,8 @@ func newStorage() (*Storage, error) {
 		return nil, err
 	}
 
+	db.SetMaxOpenConns(2)
+
 	return &Storage{
 		users: sync.Map{},
 		db:    db,
@@ -40,23 +42,34 @@ type StorageUser struct {
 	Candidate string
 }
 
+func (u *StorageUser) validate() error {
+	if u.Id == "" {
+		return errors.New("Empty user id")
+	}
+	return nil
+}
+
 func (s *Storage) Obtain(id string) (*StorageUser, error) {
+	if id == "" {
+		return nil, errors.New("Unable to obtain empty id")
+	}
+
 	user := s.fromCache(id)
 	if user != nil {
-		return user, nil
+		return user, user.validate()
 	}
 	persistedUser, err := s.fromPersisted(id)
 	if err != nil {
 		return nil, err
 	}
 	if persistedUser != nil {
-		return persistedUser, nil
+		return persistedUser, persistedUser.validate()
 	}
 
 	newUser := &StorageUser{Id: id}
 	s.users.Store(id, newUser)
 
-	return newUser, nil
+	return newUser, newUser.validate()
 }
 
 func (s *Storage) fromCache(id string) *StorageUser {
@@ -72,10 +85,10 @@ func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
 		return nil, errors.New("persistence not enabled")
 	}
 
-	sqlStatement := `SELECT id, level, age, candidate FROM users WHERE id = $1;`
+	sqlStatement := `SELECT id, level, conversation_started, age, candidate FROM users WHERE id = $1;`
 	var user StorageUser
 	row := s.db.QueryRow(sqlStatement, id)
-	err := row.Scan(&user.Id, &user.Level, &user.Age, &user.Candidate)
+	err := row.Scan(&user.Id, &user.Level, &user.ConversationStarted, &user.Age, &user.Candidate)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -127,11 +140,11 @@ func (s *Storage) Persist(id string) error {
 	}
 
 	if count == 0 {
-		sqlStatement = `INSERT INTO users (id, level, age, candidate) VALUES ($1, $2, $3, $4)`
-		_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.Age, user.Candidate)
+		sqlStatement = `INSERT INTO users (id, level, conversation_started, age, candidate) VALUES ($1, $2, $3, $4, $5)`
+		_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
 		return err
 	}
-	sqlStatement = `UPDATE users SET level=$2, age=$3, candidate=$4 WHERE id = $1`
-	_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.Age, user.Candidate)
+	sqlStatement = `UPDATE users SET level=$2, conversation_started=$3, age=$4, candidate=$5 WHERE id = $1`
+	_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
 	return err
 }
