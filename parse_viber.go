@@ -51,7 +51,7 @@ func parseCallback(b []byte) (*ViberCallback, error) {
 		ret.Message.Text = strings.ToLower(ret.Message.Text)
 		return ret, err
 	}
-	if ret.Event == "delivered" || ret.Event == "seen" {
+	if ret.Event == "delivered" || ret.Event == "seen" || ret.Event == "unsubscribed" {
 		m := &ViberSeenMessage{}
 		err = json.Unmarshal(b, m)
 		if err != nil {

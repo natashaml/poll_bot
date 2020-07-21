@@ -69,6 +69,7 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 		return
 	}
 	if reply != nil {
+		log.Printf("Got reply %v", *reply)
 		message := v.NewTextMessage(reply.text)
 		if len(reply.options) > 0 {
 			message.SetKeyboard(keyboardFromOptions(v, reply.options))
@@ -83,9 +84,10 @@ func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *ht
 }
 
 func keyboardFromOptions(v *viber.Viber, options []string) *viber.Keyboard {
-	ret := v.NewKeyboard("black", true)
+	ret := v.NewKeyboard("#FFFFFF", true)
+	colSize := len(options)
 	for _, opt := range options {
-		b := v.NewTextButton(1, 1, viber.Reply, opt, opt)
+		b := v.NewTextButton(colSize+1, 1, viber.Reply, opt, opt)
 		ret.AddButton(b)
 	}
 	return ret

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -17,6 +15,10 @@ type viberReply struct {
 }
 
 func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error) {
+	if c.Event == "unsubscribed" {
+		return nil, nil
+	}
+
 	if c.Event == "delivered" || c.Event == "seen" {
 		return nil, nil
 	}
@@ -38,10 +40,12 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 
 		err := analyseAnswer(p, storageUser, c)
 		if err != nil {
-			return &viberReply{text: err.Error()}, nil
+			reply := getViberReplyForLevel(p, storageUser.Level, c)
+			reply.text = err.Error() + " " + reply.text
+			return reply, nil
 		}
 		if storageUser.Level == 4 {
-			err = s.Persist(storageUser.Id)
+			_ = s.Persist(storageUser.Id)
 			if err != nil {
 				return nil, err
 			}
@@ -50,7 +54,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		}
 
 		storageUser.Level++
-		err = s.Persist(storageUser.Id)
+		_ = s.Persist(storageUser.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +65,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	if !storageUser.ConversationStarted {
 		reply := getViberReplyForLevel(p, storageUser.Level, c)
 		storageUser.ConversationStarted = true
-		err = s.Persist(storageUser.Id)
+		_ = s.Persist(storageUser.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -101,15 +105,4 @@ func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) error {
 		}
 	}
 	return nil
-}
-
-func analyseAge(age string) (int, error) {
-	i, err := strconv.Atoi(age)
-	if err != nil {
-		return 0, nil
-	}
-	if i < 18 {
-		return 0, errors.New("Вам должно быть 18 или больше")
-	}
-	return i, nil
 }

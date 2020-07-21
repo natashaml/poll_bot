@@ -32,6 +32,7 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "беларусь"))
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваш возраст")
+	require.Equal(t, reply.options, []string{"18-24", "25-34", "35-44", "45-54", "55+"})
 }
 
 func TestUserFlow(t *testing.T) {
@@ -51,10 +52,12 @@ func TestUserFlow(t *testing.T) {
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Привет"))
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваше гражданство?")
+	require.Equal(t, reply.options, []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"})
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Россия"))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Только граждание Беларуси могут принимать участие!")
+	require.Equal(t, reply.text, "Только граждание Беларуси могут принимать участие! Укажите, пожалуйста, Ваше гражданство?")
+	require.Equal(t, reply.options, []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"})
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Беларусь"))
 	require.NoError(t, err)
@@ -62,7 +65,7 @@ func TestUserFlow(t *testing.T) {
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "16"))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Вам должно быть 18 или больше")
+	require.Equal(t, reply.text, "Вам должно быть 18 или больше. Укажите, пожалуйста, Ваш возраст")
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "39"))
 	require.NoError(t, err)
@@ -77,7 +80,7 @@ func TestUserFlow(t *testing.T) {
 
 	reply, err = generateReplyFor(p, s, newSeenCallback(t, userId))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "")
+	require.Nil(t, reply)
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Берлин"))
 	require.NoError(t, err)

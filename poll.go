@@ -52,7 +52,7 @@ func generateOurPoll() poll {
 				return err
 			}
 			if i < 18 {
-				return errors.New("Вам должно быть 18 или больше")
+				return errors.New("Вам должно быть 18 или больше.")
 			}
 			return nil
 		},

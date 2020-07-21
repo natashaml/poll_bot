@@ -89,3 +89,21 @@ func TestParseConversationStartedCallback(t *testing.T) {
 	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
 	require.Equal(t, m.User.Name, "Georgy Buranov")
 }
+
+const unsubscribedMessage = `{"event":"unsubscribed","timestamp":1595347885535,"chat_hostname":"SN-376_","user_id":"3SQNc4FPUQmysaM/AQEhXg==","message_token":5466394919049723652}`
+
+func TestUnsubscribedMessage(t *testing.T) {
+	m, err := parseCallback([]byte(unsubscribedMessage))
+	require.NoError(t, err)
+	require.Equal(t, m.Event, "unsubscribed")
+	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
+}
+
+const webhookMessage = `{"event":"webhook","timestamp":1595347748566,"chat_hostname":"SN-CHAT-22_","message_token":5466394344559121456}`
+
+func TestWebhookMessage(t *testing.T) {
+	m, err := parseCallback([]byte(webhookMessage))
+	require.NoError(t, err)
+	require.Equal(t, m.Event, "webhook")
+	require.Equal(t, m.User.Id, "")
+}
