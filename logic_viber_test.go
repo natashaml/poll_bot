@@ -7,7 +7,11 @@ import (
 )
 
 func TestUserFlow(t *testing.T) {
-	s := newStorage()
+	s, err := newTestStorage()
+	require.NoError(t, err)
+	err = s.init()
+	require.NoError(t, err)
+
 	reply, err := generateReplyFor(s, newSubscribeCallback("123"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Добрый день, Vasya. Добро пожаловать")
