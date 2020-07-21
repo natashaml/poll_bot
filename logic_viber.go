@@ -11,7 +11,7 @@ func knownNotMessageEvent(c *ViberCallback) bool {
 	return c.Event == "delivered" || c.Event == "seen" || c.Event == "subscribed" || c.Event == "conversation_started"
 }
 
-func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
+func generateReplyFor(p poll, s *Storage, c *ViberCallback) (string, error) {
 	if c.Event == "delivered" || c.Event == "seen" {
 		return "", nil
 	}
@@ -31,7 +31,7 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 			return "Вы уже проголосовали за " + strings.Title(storageUser.Candidate), nil
 		}
 
-		message := analyseAnswer(storageUser, c)
+		message := analyseAnswer(p, storageUser, c)
 		if message != "" {
 			return message, nil
 		}
@@ -49,12 +49,12 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		message = getMessageForLevel(storageUser.Level, c)
+		message = getMessageForLevel(p, storageUser.Level, c)
 		return message, nil
 	}
 
 	if !storageUser.ConversationStarted {
-		message := getMessageForLevel(storageUser.Level, c)
+		message := getMessageForLevel(p, storageUser.Level, c)
 		storageUser.ConversationStarted = true
 		err = s.Persist(storageUser.Id)
 		if err != nil {
@@ -70,44 +70,28 @@ func generateReplyFor(s *Storage, c *ViberCallback) (string, error) {
 	return "", fmt.Errorf("Unknown message %v", c.Event)
 }
 
-func getMessageForLevel(level int, c *ViberCallback) string {
-	if level == 0 {
-		return "Добрый день, " + c.User.Name + ". Добро пожаловать"
-	} else if level == 1 {
-		return "Вы гражданин республики Беларусь?"
-	} else if level == 2 {
-		return "Ващ возраст?"
-	} else if level == 3 {
-		return "Укажите вас регион?"
-	} else if level == 4 {
-		return "Какой ваш кандидат?"
-	} else {
-		return "Непонятно"
+func getMessageForLevel(p poll, level int, c *ViberCallback) string {
+	item := p[level]
+	if item != nil {
+		return item.question(c)
 	}
+	return "Непонятно"
 }
 
-func analyseAnswer(u *StorageUser, c *ViberCallback) string {
+func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) string {
 	level := u.Level
-
-	if level == 0 {
-		return ""
-	}
-	if level == 1 {
-		if c.Message.Text != "да" {
-			return "Надо ответить да!"
-		}
-		return ""
-	}
-	if level == 2 {
-		age, err := analyseAge(c.Message.Text)
+	item := p[level]
+	if item != nil && item.validateAnswer != nil {
+		err := item.validateAnswer(c.Message.Text)
 		if err != nil {
-			return "Вам должно быть 18 или больше"
+			return err.Error()
 		}
-		u.Age = age
-		return ""
 	}
-	if level == 4 {
-		u.Candidate = c.Message.Text
+	if item != nil && item.persistAnswer != nil {
+		err := item.persistAnswer(c.Message.Text, u)
+		if err != nil {
+			return err.Error()
+		}
 	}
 	return ""
 }

@@ -16,8 +16,10 @@ func serve(v *viber.Viber) error {
 		return err
 	}
 
+	p := generateOurPoll()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handleMain(v, s, w, r)
+		handleMain(p, v, s, w, r)
 	})
 
 	port := os.Getenv("PORT")
@@ -37,7 +39,7 @@ func isJSON(s []byte) bool {
 	return json.Unmarshal(s, &js) == nil
 }
 
-func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Request) {
+func handleMain(p poll, v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -55,14 +57,14 @@ func handleMain(v *viber.Viber, s *Storage, w http.ResponseWriter, r *http.Reque
 
 	c, err := parseCallback(bytes)
 	if err != nil {
-		log.Printf("Error reading callback: %v", err)
+		log.Printf("Error reading callback: %v for input %v", err, string(bytes))
 		http.Error(w, "can't parse body", http.StatusBadRequest)
 		return
 	}
 
-	reply, err := generateReplyFor(s, c)
+	reply, err := generateReplyFor(p, s, c)
 	if err != nil {
-		log.Printf("Error generating reply: %v", err)
+		log.Printf("Error generating reply: %v for input %v", err, string(bytes))
 		http.Error(w, "can't reply", http.StatusBadRequest)
 		return
 	}

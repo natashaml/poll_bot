@@ -14,21 +14,23 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 	err = s.init()
 	require.NoError(t, err)
 
+	p := generateOurPoll()
+
 	userId := "123"
 
-	reply, err := generateReplyFor(s, newSubscribeCallback(t, userId))
+	reply, err := generateReplyFor(p, s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Добрый день, Vasya. Добро пожаловать")
 
 	text := newTextCallback(t, userId, "Привет")
 	require.Equal(t, text.User.Id, userId)
-	reply, err = generateReplyFor(s, text)
+	reply, err = generateReplyFor(p, s, text)
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы гражданин республики Беларусь?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "да"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "да"))
 	require.NoError(t, err)
-	require.Equal(t, reply, "Ващ возраст?")
+	require.Equal(t, reply, "Ваш возраст?")
 }
 
 func TestUserFlow(t *testing.T) {
@@ -37,29 +39,31 @@ func TestUserFlow(t *testing.T) {
 	err = s.init()
 	require.NoError(t, err)
 
+	p := generateOurPoll()
+
 	userId := "123"
 
-	reply, err := generateReplyFor(s, newSubscribeCallback(t, userId))
+	reply, err := generateReplyFor(p, s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Добрый день, Vasya. Добро пожаловать")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Привет"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Привет"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы гражданин республики Беларусь?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Нет"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Нет"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Надо ответить да!")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Да"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Да"))
 	require.NoError(t, err)
-	require.Equal(t, reply, "Ващ возраст?")
+	require.Equal(t, reply, "Ваш возраст?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "16"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "16"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вам должно быть 18 или больше")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "39"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "39"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Укажите вас регион?")
 
@@ -70,15 +74,15 @@ func TestUserFlow(t *testing.T) {
 	require.Equal(t, user.Age, 39)
 	require.Equal(t, user.Level, 3)
 
-	reply, err = generateReplyFor(s, newSeenCallback(t, userId))
+	reply, err = generateReplyFor(p, s, newSeenCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Берлин"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Берлин"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Какой ваш кандидат?")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Лукашенко"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Лукашенко"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Спасибо за голосование!")
 
@@ -90,22 +94,22 @@ func TestUserFlow(t *testing.T) {
 	require.Equal(t, user.Level, 4)
 	require.Equal(t, user.Candidate, "лукашенко")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Передумал"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы уже проголосовали за Лукашенко")
 
-	reply, err = generateReplyFor(s, newTextCallback(t, userId, "Передумал"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Передумал"))
 	require.NoError(t, err)
 	require.Equal(t, reply, "Вы уже проголосовали за Лукашенко")
 
 	subscribe := newSubscribeCallback(t, userId)
 	user, err = s.Obtain(userId)
 	require.NoError(t, err)
-	reply, err = generateReplyFor(s, subscribe)
+	reply, err = generateReplyFor(p, s, subscribe)
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 
-	reply, err = generateReplyFor(s, newSeenCallback(t, userId))
+	reply, err = generateReplyFor(p, s, newSeenCallback(t, userId))
 	require.NoError(t, err)
 	require.Equal(t, reply, "")
 }
