@@ -109,13 +109,13 @@ func TestRealStorage(t *testing.T) {
 	user, err := s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, 0)
+	require.Equal(t, user.Age, "")
 	user.Age = "16"
 
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, 16)
+	require.Equal(t, user.Age, "16")
 
 	err = s.Persist("12")
 	require.NoError(t, err)

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
-	_ "github.com/lib/pq"
 )
 
 type Storage struct {
@@ -15,7 +13,7 @@ type Storage struct {
 }
 
 func newStorage() (*Storage, error) {
-	persistent, err := newPersistenseStorage()
+	persistent, err := newPersistenseStorageSqllite()
 	if err != nil {
 		return nil, err
 	}

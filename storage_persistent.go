@@ -4,13 +4,35 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type persistenseStorage struct {
 	db *sql.DB
 }
 
-func newPersistenseStorage() (*persistenseStorage, error) {
+func newPersistenseStorageSqllite() (*persistenseStorage, error) {
+	db, err := sql.Open("sqlite3", "file:db.sqlite?cache=shared")
+	if err != nil {
+		return nil, err
+	}
+
+	batch := []string{
+		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age INT, candidate TEXT);`,
+	}
+
+	for _, b := range batch {
+		_, _ = db.Exec(b)
+	}
+
+	return &persistenseStorage{
+		db: db,
+	}, nil
+}
+
+func newPersistenseStoragePq() (*persistenseStorage, error) {
 	connStr := os.Getenv("DB_CONNECTION")
 	if connStr == "" {
 		return nil, errors.New("DB_CONNECTION is empty")
