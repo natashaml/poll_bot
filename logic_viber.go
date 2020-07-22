@@ -51,7 +51,12 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 				return nil, err
 			}
 
-			return &viberReply{text: "Спасибо за голосование!"}, nil
+			totalCount, err := s.PersistCount()
+			if err != nil {
+				return nil, err
+			}
+			text := fmt.Sprintf("Спасибо за голосование! Уже проголосовало %d человек", totalCount)
+			return &viberReply{text: text}, nil
 		}
 
 		_ = s.Persist(storageUser.Id)

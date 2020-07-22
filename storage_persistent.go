@@ -20,7 +20,7 @@ func newPersistenseStorageSqllite() (*persistenseStorage, error) {
 	}
 
 	batch := []string{
-		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age INT, candidate TEXT);`,
+		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age VARCHAR(254), candidate TEXT);`,
 	}
 
 	for _, b := range batch {
