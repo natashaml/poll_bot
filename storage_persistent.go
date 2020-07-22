@@ -42,7 +42,7 @@ func newPersistenseStoragePq() (*persistenseStorage, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(2)
+	db.SetMaxOpenConns(5)
 
 	return &persistenseStorage{
 		db: db,

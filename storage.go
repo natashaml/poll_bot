@@ -13,7 +13,7 @@ type Storage struct {
 }
 
 func newStorage() (*Storage, error) {
-	persistent, err := newPersistenseStorageSqllite()
+	persistent, err := newPersistenseStoragePq()
 	if err != nil {
 		return nil, err
 	}

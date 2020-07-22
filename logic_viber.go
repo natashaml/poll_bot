@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
 func knownEvent(c *ViberCallback) bool {
@@ -77,7 +76,6 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 }
 
 func getViberReplyForLevel(p poll, level int, c *ViberCallback) *viberReply {
-	log.Printf("getViberReplyForLevel for level %v", level)
 	item := p[level]
 	reply := viberReply{text: fmt.Sprintf("Непонятно. Нет уровня %v в вопросах", level)}
 	if item != nil {
