@@ -44,11 +44,23 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		return nil, err
 	}
 
-	if c.Event == "message" {
-		//if storageUser.Candidate != "" {
-		//	return &viberReply{text: "Вы уже проголосовали за " + strings.Title(storageUser.Candidate)}, nil
-		//}
+	defer func() {
+		if storageUser.isChanged {
+			_ = s.Persist(storageUser.Id)
+		}
+	}()
 
+	if storageUser.Name == "" && c.User.Name != "" {
+		storageUser.Name = c.User.Name
+		storageUser.isChanged = true
+	}
+
+	if storageUser.Country == "" && c.User.Country != "" {
+		storageUser.Country = c.User.Country
+		storageUser.isChanged = true
+	}
+
+	if c.Event == "message" {
 		err := analyseAnswer(p, storageUser, c)
 		if err != nil {
 			reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
@@ -56,11 +68,9 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			return reply, nil
 		}
 		storageUser.Level++
+		storageUser.isChanged = true
 		if storageUser.Level >= p.size {
-			_ = s.Persist(storageUser.Id)
-			if err != nil {
-				return nil, err
-			}
+			storageUser.isChanged = true
 
 			totalCount, err := s.PersistCount()
 			if err != nil {
@@ -70,10 +80,6 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 			return &viberReply{text: text}, nil
 		}
 
-		_ = s.Persist(storageUser.Id)
-		if err != nil {
-			return nil, err
-		}
 		reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
 		return reply, nil
 	}
@@ -81,10 +87,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	if !storageUser.ConversationStarted {
 		reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
 		storageUser.ConversationStarted = true
-		_ = s.Persist(storageUser.Id)
-		if err != nil {
-			return nil, err
-		}
+		storageUser.isChanged = true
 		return reply, nil
 	}
 

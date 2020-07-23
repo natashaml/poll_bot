@@ -51,9 +51,7 @@ func newTestStorage() (*Storage, error) {
 }
 
 func (s *Storage) init() error {
-	batch := []string{
-		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age INT, candidate TEXT);`,
-	}
+	batch := []string{initDbSql}
 
 	for _, b := range batch {
 		_, err := s.persistent.db.Exec(b)
@@ -73,13 +71,17 @@ func TestMapStorage(t *testing.T) {
 	user, err := s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, "")
-	user.Age = "16"
+	require.Equal(t, user.Properties["age"], "")
+	user.Properties["age"] = "16"
+	user.Country = "DE"
+	user.Name = "Georgy"
 
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, "16")
+	require.Equal(t, user.Properties["age"], "16")
+	require.Equal(t, user.Country, "DE")
+	require.Equal(t, user.Name, "Georgy")
 
 	err = s.Persist("12")
 	require.NoError(t, err)
@@ -94,6 +96,14 @@ func TestMapStorage(t *testing.T) {
 	count, err = s.PersistCount()
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
+
+	// then load persisted
+	user, err = s.fromPersisted("12")
+	require.NoError(t, err)
+	require.Equal(t, user.Id, "12")
+	require.Equal(t, user.Properties["age"], "16")
+	require.Equal(t, user.Country, "DE")
+	require.Equal(t, user.Name, "Georgy")
 }
 
 func TestRealStorage(t *testing.T) {
@@ -109,13 +119,13 @@ func TestRealStorage(t *testing.T) {
 	user, err := s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, "")
-	user.Age = "16"
+	require.Equal(t, user.Properties["age"], "")
+	user.Properties["age"] = "16"
 
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
-	require.Equal(t, user.Age, "16")
+	require.Equal(t, user.Properties["age"], "16")
 
 	err = s.Persist("12")
 	require.NoError(t, err)

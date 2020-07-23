@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"os"
 
@@ -13,15 +14,22 @@ type persistenseStorage struct {
 	db *sql.DB
 }
 
+const initDbSql = `CREATE TABLE users (
+	id TEXT PRIMARY KEY,
+	country VARCHAR(10) NOT NULL,
+	name VARCHAR(254) NOT NULL,
+	level INT NOT NULL,
+	properties JSON NOT NULL,
+	candidate TEXT NOT NULL,
+);`
+
 func newPersistenseStorageSqllite() (*persistenseStorage, error) {
 	db, err := sql.Open("sqlite3", "file:db.sqlite?cache=shared")
 	if err != nil {
 		return nil, err
 	}
 
-	batch := []string{
-		`CREATE TABLE users (id TEXT PRIMARY KEY, conversation_started BOOLEAN, level INT, age VARCHAR(254), candidate TEXT);`,
-	}
+	batch := []string{initDbSql}
 
 	for _, b := range batch {
 		_, _ = db.Exec(b)
@@ -50,13 +58,19 @@ func newPersistenseStoragePq() (*persistenseStorage, error) {
 }
 
 func (s *persistenseStorage) load(id string) (*StorageUser, error) {
-	sqlStatement := `SELECT id, level, conversation_started, age, candidate FROM users WHERE id = $1;`
+	sqlStatement := `SELECT id, country, name, level, properties, candidate FROM users WHERE id = $1;`
 	var user StorageUser
 	row := s.db.QueryRow(sqlStatement, id)
-	err := row.Scan(&user.Id, &user.Level, &user.ConversationStarted, &user.Age, &user.Candidate)
+	var properties string
+	err := row.Scan(&user.Id, &user.Country, &user.Name, &user.Level, &properties, &user.Candidate)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+	user.Properties = map[string]string{}
+	err = json.Unmarshal([]byte(properties), &user.Properties)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +103,17 @@ func (s *persistenseStorage) save(user *StorageUser) error {
 		return err
 	}
 
-	if count == 0 {
-		sqlStatement = `INSERT INTO users (id, level, conversation_started, age, candidate) VALUES ($1, $2, $3, $4, $5)`
-		_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
+	properties, err := json.Marshal(user.Properties)
+	if err != nil {
 		return err
 	}
-	sqlStatement = `UPDATE users SET level=$2, conversation_started=$3, age=$4, candidate=$5 WHERE id = $1`
-	_, err = s.db.Exec(sqlStatement, user.Id, user.Level, user.ConversationStarted, user.Age, user.Candidate)
+
+	if count == 0 {
+		sqlStatement = `INSERT INTO users (id, country, name, level, properties, candidate) VALUES ($1, $2, $3, $4, $5, $6)`
+		_, err = s.db.Exec(sqlStatement, user.Id, user.Country, user.Name, user.Level, string(properties), user.Candidate)
+		return err
+	}
+	sqlStatement = `UPDATE users SET country=$2, name=$3, level=$4, properties=$5, candidate=$6 WHERE id = $1`
+	_, err = s.db.Exec(sqlStatement, user.Id, user.Country, user.Name, user.Level, string(properties), user.Candidate)
 	return err
 }

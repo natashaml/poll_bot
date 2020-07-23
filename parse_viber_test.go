@@ -38,6 +38,7 @@ func TestParseViberMessage(t *testing.T) {
 	require.Equal(t, m.Message.Text, "a message to the service")
 	require.Equal(t, m.User.Id, "01234567890A=")
 	require.Equal(t, m.User.Name, "John McClane")
+	require.Equal(t, m.User.Country, "UK")
 }
 
 const subscribeMessage = `{
@@ -60,6 +61,7 @@ func TestParseViberSubscribe(t *testing.T) {
 	require.Equal(t, m.Event, "subscribed")
 	require.Equal(t, m.User.Id, "01234567890A=")
 	require.Equal(t, m.User.Name, "John McClane")
+	require.Equal(t, m.User.Country, "UK")
 }
 
 const deliveryCallback = `{"event":"delivered","timestamp":1595324677891,"chat_hostname":"SN-CHAT-02_","message_token":5466297578174182639,"user_id":"3SQNc4FPUQmysaM/AQEhXg=="}`
@@ -88,6 +90,7 @@ func TestParseConversationStartedCallback(t *testing.T) {
 	require.Equal(t, m.Event, "conversation_started")
 	require.Equal(t, m.User.Id, "3SQNc4FPUQmysaM/AQEhXg==")
 	require.Equal(t, m.User.Name, "Georgy Buranov")
+	require.Equal(t, m.User.Country, "DE")
 }
 
 const unsubscribedMessage = `{"event":"unsubscribed","timestamp":1595347885535,"chat_hostname":"SN-376_","user_id":"3SQNc4FPUQmysaM/AQEhXg==","message_token":5466394919049723652}`

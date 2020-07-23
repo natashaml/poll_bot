@@ -33,7 +33,7 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Беларусь"))
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваш возраст")
-	require.Equal(t, reply.options, []string{"<18", "18-24", "25-34", "35-44", "45-54", "55+"})
+	require.Equal(t, reply.options, []string{"меньше 18", "18-24", "25-34", "35-44", "45-54", "55+"})
 
 	user, err := s.fromPersisted(userId)
 	require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestUserFlow(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваш возраст")
 
-	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "<18"))
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "меньше 18"))
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Вам должно быть 18 или больше. Укажите, пожалуйста, Ваш возраст")
 
@@ -89,7 +89,8 @@ func TestUserFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, user.Id, userId)
-	require.Equal(t, user.Age, "35-44")
+	fmt.Println(user)
+	require.Equal(t, user.Properties["age"], "35-44")
 	require.Equal(t, user.Level, 2)
 
 	seenCallback := newSeenCallback(t, userId)
@@ -115,7 +116,7 @@ func TestUserFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, user.Id, userId)
-	require.Equal(t, user.Age, "35-44")
+	require.Equal(t, user.Properties["age"], "35-44")
 	require.Equal(t, user.Level, 5)
 	require.Equal(t, user.Candidate, "Александр Лукашенко")
 

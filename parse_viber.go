@@ -11,8 +11,9 @@ type Message struct {
 }
 
 type User struct {
-	Id   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	Id      string `json:"id,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Country string `json:"country,omitempty"`
 }
 
 type ViberCallback struct {

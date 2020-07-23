@@ -25,16 +25,18 @@ func newStorage() (*Storage, error) {
 }
 
 type StorageUser struct {
-	Id                  string
-	Level               int
-	ConversationStarted bool
-	Age                 string
-	WillTakePart        string
-	WhenVote            string
-	Gender              string
-	Education           string
+	Id      string
+	Name    string
+	Country string
+
+	Level int
+
+	Properties map[string]string
 
 	Candidate string
+
+	isChanged           bool
+	ConversationStarted bool
 }
 
 func (u *StorageUser) validate() error {
@@ -51,6 +53,7 @@ func (s *Storage) Obtain(id string) (*StorageUser, error) {
 
 	user := s.fromCache(id)
 	if user != nil {
+		user.isChanged = false
 		return user, user.validate()
 	}
 	persistedUser, err := s.fromPersisted(id)
@@ -58,15 +61,21 @@ func (s *Storage) Obtain(id string) (*StorageUser, error) {
 		return nil, err
 	}
 	if persistedUser != nil {
+		persistedUser.isChanged = false
 		return persistedUser, persistedUser.validate()
 	}
 
-	newUser := &StorageUser{Id: id}
+	newUser := &StorageUser{
+		Id:         id,
+		Properties: map[string]string{},
+	}
 	s.users.Store(id, newUser)
+	newUser.isChanged = false
 
 	return newUser, newUser.validate()
 }
 
+// internal
 func (s *Storage) fromCache(id string) *StorageUser {
 	user, ok := s.users.Load(id)
 	if ok && user != nil {
@@ -75,6 +84,7 @@ func (s *Storage) fromCache(id string) *StorageUser {
 	return nil
 }
 
+// internal
 func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
 	if s.persistent == nil {
 		return nil, errors.New("persistence not enabled")

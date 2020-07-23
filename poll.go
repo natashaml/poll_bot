@@ -58,15 +58,16 @@ func generateOurPoll() poll {
 		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Укажите, пожалуйста, Ваш возраст"
 		},
-		possibleAnswers: []string{"<18", "18-24", "25-34", "35-44", "45-54", "55+"},
+		possibleAnswers: []string{"меньше 18", "18-24", "25-34", "35-44", "45-54", "55+"},
 		validateAnswer: func(answer string) error {
-			if answer == "<18" {
+			if answer == "меньше 18" {
 				return errors.New("Вам должно быть 18 или больше.")
 			}
 			return nil
 		},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			u.Age = answer
+			u.Properties["age"] = answer
+			u.isChanged = true
 			return nil
 		},
 	})
@@ -77,7 +78,8 @@ func generateOurPoll() poll {
 		},
 		possibleAnswers: []string{"Да, приму обязательно", "Да, скорее приму", "Нет, скорее не приму", "Нет, не приму", "Затрудняюсь ответить"},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			u.WillTakePart = answer
+			u.Properties["will_take_part"] = answer
+			u.isChanged = true
 			return nil
 		},
 	})
@@ -88,7 +90,8 @@ func generateOurPoll() poll {
 		},
 		possibleAnswers: []string{"Досрочно", "В основной день", "Затрудняюсь ответить"},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			u.WhenVote = answer
+			u.Properties["when_vote"] = answer
+			u.isChanged = true
 			return nil
 		},
 	})
@@ -100,6 +103,7 @@ func generateOurPoll() poll {
 		possibleAnswers: []string{"Александр Лукашенко", "Сергей Черечень", "Анна Канопацкая", "Андрей Дмитриев", "Светлана Тихановская", "Против всех", "Затрудняюсь ответить"},
 		persistAnswer: func(answer string, u *StorageUser) error {
 			u.Candidate = answer
+			u.isChanged = true
 			return nil
 		},
 	})
@@ -110,7 +114,8 @@ func generateOurPoll() poll {
 		},
 		possibleAnswers: []string{"Мужской", "Женский"},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			u.Gender = answer
+			u.Properties["gender"] = answer
+			u.isChanged = true
 			return nil
 		},
 	})
@@ -121,7 +126,8 @@ func generateOurPoll() poll {
 		},
 		possibleAnswers: []string{"Среднее общее (школа)", "Профессионально-техническое", "Среднее специальное (техникум, колледж)", "Неполное высшее", "Высшее, ученая степень"},
 		persistAnswer: func(answer string, u *StorageUser) error {
-			u.Education = answer
+			u.Properties["education"] = answer
+			u.isChanged = true
 			return nil
 		},
 	})
