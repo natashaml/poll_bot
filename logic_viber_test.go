@@ -34,6 +34,18 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваш возраст")
 	require.Equal(t, reply.options, []string{"<18", "18-24", "25-34", "35-44", "45-54", "55+"})
+
+	user, err := s.fromPersisted(userId)
+	require.NoError(t, err)
+	require.Equal(t, user.Id, userId)
+
+	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Clear"))
+	require.NoError(t, err)
+	require.Equal(t, reply.text, "Your storage cleared with <nil>")
+
+	user, err = s.fromPersisted(userId)
+	require.NoError(t, err)
+	require.Nil(t, user)
 }
 
 func TestUserFlow(t *testing.T) {

@@ -104,7 +104,7 @@ func getViberReplyForLevel(p poll, u *StorageUser, level int, c *ViberCallback) 
 func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) error {
 	item := p.getLevel(u.Level)
 	if item == nil {
-		return
+		return nil
 	}
 
 	answer := c.Message.Text
