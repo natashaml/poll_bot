@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"strconv"
 )
 
 type pollItem struct {
@@ -48,7 +47,7 @@ func generateOurPoll() poll {
 		},
 		possibleAnswers: []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"},
 		validateAnswer: func(answer string) error {
-			if answer != "беларусь" {
+			if answer != "Беларусь" {
 				return errors.New("Только граждание Беларуси могут принимать участие!")
 			}
 			return nil
@@ -59,13 +58,9 @@ func generateOurPoll() poll {
 		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Укажите, пожалуйста, Ваш возраст"
 		},
-		possibleAnswers: []string{"18-24", "25-34", "35-44", "45-54", "55+"},
+		possibleAnswers: []string{"<18", "18-24", "25-34", "35-44", "45-54", "55+"},
 		validateAnswer: func(answer string) error {
-			i, err := strconv.Atoi(answer)
-			if err != nil {
-				return nil
-			}
-			if i < 18 {
+			if answer == "<18" {
 				return errors.New("Вам должно быть 18 или больше.")
 			}
 			return nil

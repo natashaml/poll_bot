@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -11,6 +12,15 @@ func knownEvent(c *ViberCallback) bool {
 		c.Event == "subscribed" ||
 		c.Event == "conversation_started" ||
 		c.Event == "webhook"
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 type viberReply struct {
@@ -92,14 +102,19 @@ func getViberReplyForLevel(p poll, u *StorageUser, level int, c *ViberCallback) 
 
 func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) error {
 	item := p.getLevel(u.Level)
+	answer := c.Message.Text
+	if item.possibleAnswers != nil && !contains(item.possibleAnswers, answer) {
+		return errors.New("Пожалуйста выберите предложенный ответ.")
+	}
+
 	if item != nil && item.validateAnswer != nil {
-		err := item.validateAnswer(c.Message.Text)
+		err := item.validateAnswer(answer)
 		if err != nil {
 			return err
 		}
 	}
 	if item != nil && item.persistAnswer != nil {
-		err := item.persistAnswer(c.Message.Text, u)
+		err := item.persistAnswer(answer, u)
 		if err != nil {
 			return err
 		}

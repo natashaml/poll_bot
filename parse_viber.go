@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 type Message struct {
@@ -48,7 +47,6 @@ func parseCallback(b []byte) (*ViberCallback, error) {
 			return nil, err
 		}
 		ret.User = m.User
-		ret.Message.Text = strings.ToLower(ret.Message.Text)
 		return ret, err
 	}
 	if ret.Event == "delivered" || ret.Event == "seen" || ret.Event == "unsubscribed" {
