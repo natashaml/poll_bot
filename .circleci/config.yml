@@ -1,0 +1,35 @@
+# Orb Dependencies
+orbs:
+  gcloud: circleci/gcp-cli@1.0.6
+  gcr: circleci/gcp-gcr@0.0.2
+  go: circleci/go@1.3.0
+
+jobs:
+  build:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - checkout
+      - gcloud/install
+      - gcloud/initialize
+      - go/load-cache
+      - go/mod-download
+      - go/save-cache
+
+      # Changing the container image with the last version (production)
+      - run:
+          name: Updating of a new image
+          command: |
+            if [[ $CIRCLE_BRANCH == master ]] ; then
+              BUILD_NUM=<< pipeline.number >>
+              echo "Changing the container image with the last version (production)"
+              gcloud app deploy --project $GOOGLE_PROJECT_ID --version BUILD_NUM --no-promote
+            else echo "Not executing on a branch other than master"
+            fi
+
+workflows:
+  version: 2.1
+  main:
+    jobs:
+      - build
