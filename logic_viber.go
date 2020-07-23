@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 func knownEvent(c *ViberCallback) bool {
@@ -33,7 +34,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		return nil, fmt.Errorf("Unknown message %v", c.Event)
 	}
 
-	if c.Message.Text == "clear" {
+	if strings.ToLower(c.Message.Text) == "clear" {
 		err := s.Clear(c.User.Id)
 		return &viberReply{text: fmt.Sprintf("Your storage cleared with %v", err)}, nil
 	}
@@ -102,18 +103,22 @@ func getViberReplyForLevel(p poll, u *StorageUser, level int, c *ViberCallback) 
 
 func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) error {
 	item := p.getLevel(u.Level)
+	if item == nil {
+		return
+	}
+
 	answer := c.Message.Text
 	if item.possibleAnswers != nil && !contains(item.possibleAnswers, answer) {
 		return errors.New("Пожалуйста выберите предложенный ответ.")
 	}
 
-	if item != nil && item.validateAnswer != nil {
+	if item.validateAnswer != nil {
 		err := item.validateAnswer(answer)
 		if err != nil {
 			return err
 		}
 	}
-	if item != nil && item.persistAnswer != nil {
+	if item.persistAnswer != nil {
 		err := item.persistAnswer(answer, u)
 		if err != nil {
 			return err
