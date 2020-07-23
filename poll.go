@@ -7,31 +7,44 @@ import (
 
 type pollItem struct {
 	level           int
-	question        func(c *ViberCallback) string
+	question        func(user *StorageUser, c *ViberCallback) string
 	possibleAnswers []string
 	validateAnswer  func(string) error
 	persistAnswer   func(string, *StorageUser) error
 }
 
-type poll map[int]*pollItem
+type poll struct {
+	items map[int]*pollItem
+	size  int
+}
+
+func (p *poll) add(item *pollItem) {
+	item.level = p.size
+	p.items[item.level] = item
+	p.size++
+}
+
+func (p *poll) getLevel(level int) *pollItem {
+	return p.items[level]
+}
 
 func generateOurPoll() poll {
-	ret := poll{}
-	item0 := pollItem{
-		level: 0,
-		question: func(c *ViberCallback) string {
-			if c.User.Name == "" {
-				return "Добро пожаловать."
-			}
-			return "Добрый день, " + c.User.Name + ". Добро пожаловать"
-		},
+	ret := poll{
+		items: map[int]*pollItem{},
 	}
-	ret[item0.level] = &item0
 
-	item1 := pollItem{
-		level: 1,
-		question: func(c *ViberCallback) string {
-			return "Укажите, пожалуйста, Ваше гражданство?"
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
+			var welcome string
+			if !user.ConversationStarted {
+				if c.User.Name == "" {
+					welcome = "Добро пожаловать. "
+				} else {
+					welcome = "Добрый день, " + c.User.Name + ". Добро пожаловать. "
+				}
+			}
+
+			return welcome + "Укажите, пожалуйста, Ваше гражданство?"
 		},
 		possibleAnswers: []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"},
 		validateAnswer: func(answer string) error {
@@ -40,12 +53,10 @@ func generateOurPoll() poll {
 			}
 			return nil
 		},
-	}
-	ret[item1.level] = &item1
+	})
 
-	item2 := pollItem{
-		level: 2,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Укажите, пожалуйста, Ваш возраст"
 		},
 		possibleAnswers: []string{"18-24", "25-34", "35-44", "45-54", "55+"},
@@ -63,12 +74,10 @@ func generateOurPoll() poll {
 			u.Age = answer
 			return nil
 		},
-	}
-	ret[item2.level] = &item2
+	})
 
-	item3 := pollItem{
-		level: 3,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Примете ли Вы участие в предстоящих выборах Президента?"
 		},
 		possibleAnswers: []string{"Да, приму обязательно", "Да, скорее приму", "Нет, скорее не приму", "Нет, не приму", "Затрудняюсь ответить"},
@@ -76,12 +85,10 @@ func generateOurPoll() poll {
 			u.WillTakePart = answer
 			return nil
 		},
-	}
-	ret[item3.level] = &item3
+	})
 
-	item4 := pollItem{
-		level: 4,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Когда Вы планируете голосовать?"
 		},
 		possibleAnswers: []string{"Досрочно", "В основной день", "Затрудняюсь ответить"},
@@ -89,12 +96,10 @@ func generateOurPoll() poll {
 			u.WhenVote = answer
 			return nil
 		},
-	}
-	ret[item4.level] = &item4
+	})
 
-	item5 := pollItem{
-		level: 5,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "За кого Вы планируете проголосовать?"
 		},
 		possibleAnswers: []string{"Александр Лукашенко", "Сергей Черечень", "Анна Канопацкая", "Андрей Дмитриев", "Светлана Тихановская", "Против всех", "Затрудняюсь ответить"},
@@ -102,12 +107,10 @@ func generateOurPoll() poll {
 			u.Candidate = answer
 			return nil
 		},
-	}
-	ret[item5.level] = &item5
+	})
 
-	item6 := pollItem{
-		level: 6,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Укажите, пожалуйста, Ваш пол"
 		},
 		possibleAnswers: []string{"Мужской", "Женский"},
@@ -115,12 +118,10 @@ func generateOurPoll() poll {
 			u.Gender = answer
 			return nil
 		},
-	}
-	ret[item6.level] = &item6
+	})
 
-	item7 := pollItem{
-		level: 7,
-		question: func(c *ViberCallback) string {
+	ret.add(&pollItem{
+		question: func(user *StorageUser, c *ViberCallback) string {
 			return "Ваш уровень образования?"
 		},
 		possibleAnswers: []string{"Среднее общее (школа)", "Профессионально-техническое", "Среднее специальное (техникум, колледж)", "Неполное высшее", "Высшее, ученая степень"},
@@ -128,8 +129,7 @@ func generateOurPoll() poll {
 			u.Education = answer
 			return nil
 		},
-	}
-	ret[item7.level] = &item7
+	})
 
 	return ret
 }

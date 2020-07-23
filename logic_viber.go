@@ -40,12 +40,12 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 
 		err := analyseAnswer(p, storageUser, c)
 		if err != nil {
-			reply := getViberReplyForLevel(p, storageUser.Level, c)
+			reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
 			reply.text = err.Error() + " " + reply.text
 			return reply, nil
 		}
 		storageUser.Level++
-		if storageUser.Level >= len(p) {
+		if storageUser.Level >= p.size {
 			_ = s.Persist(storageUser.Id)
 			if err != nil {
 				return nil, err
@@ -63,13 +63,13 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		if err != nil {
 			return nil, err
 		}
-		reply := getViberReplyForLevel(p, storageUser.Level, c)
+		reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
 		return reply, nil
 	}
 
 	if !storageUser.ConversationStarted {
+		reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
 		storageUser.ConversationStarted = true
-		reply := getViberReplyForLevel(p, storageUser.Level, c)
 		_ = s.Persist(storageUser.Id)
 		if err != nil {
 			return nil, err
@@ -80,19 +80,18 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	return nil, nil
 }
 
-func getViberReplyForLevel(p poll, level int, c *ViberCallback) *viberReply {
-	item := p[level]
+func getViberReplyForLevel(p poll, u *StorageUser, level int, c *ViberCallback) *viberReply {
+	item := p.getLevel(level)
 	reply := viberReply{text: fmt.Sprintf("Непонятно. Нет уровня %v в вопросах", level)}
 	if item != nil {
-		reply.text = item.question(c)
+		reply.text = item.question(u, c)
 		reply.options = item.possibleAnswers
 	}
 	return &reply
 }
 
 func analyseAnswer(p poll, u *StorageUser, c *ViberCallback) error {
-	level := u.Level
-	item := p[level]
+	item := p.getLevel(u.Level)
 	if item != nil && item.validateAnswer != nil {
 		err := item.validateAnswer(c.Message.Text)
 		if err != nil {

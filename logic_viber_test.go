@@ -20,13 +20,14 @@ func TestUserFlowCaseSensitive(t *testing.T) {
 
 	reply, err := generateReplyFor(p, s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Добрый день, Vasya. Добро пожаловать")
+	require.Equal(t, reply.text, "Добрый день, Vasya. Добро пожаловать. Укажите, пожалуйста, Ваше гражданство?")
+	require.Equal(t, reply.options, []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"})
 	text := newTextCallback(t, userId, "Привет")
 	require.Equal(t, text.User.Id, userId)
 
 	reply, err = generateReplyFor(p, s, text)
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваше гражданство?")
+	require.Equal(t, reply.text, "Только граждание Беларуси могут принимать участие! Укажите, пожалуйста, Ваше гражданство?")
 	require.Equal(t, reply.options, []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"})
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "беларусь"))
@@ -47,11 +48,11 @@ func TestUserFlow(t *testing.T) {
 
 	reply, err := generateReplyFor(p, s, newSubscribeCallback(t, userId))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Добрый день, Vasya. Добро пожаловать")
+	require.Equal(t, reply.text, "Добрый день, Vasya. Добро пожаловать. Укажите, пожалуйста, Ваше гражданство?")
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Привет"))
 	require.NoError(t, err)
-	require.Equal(t, reply.text, "Укажите, пожалуйста, Ваше гражданство?")
+	require.Equal(t, reply.text, "Только граждание Беларуси могут принимать участие! Укажите, пожалуйста, Ваше гражданство?")
 	require.Equal(t, reply.options, []string{"Беларусь", "Россия", "Украина", "Казахстан", "Другая страна"})
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Россия"))
@@ -77,7 +78,7 @@ func TestUserFlow(t *testing.T) {
 
 	require.Equal(t, user.Id, userId)
 	require.Equal(t, user.Age, "39")
-	require.Equal(t, user.Level, 3)
+	require.Equal(t, user.Level, 2)
 
 	seenCallback := newSeenCallback(t, userId)
 	require.Equal(t, seenCallback.User.Id, userId)
@@ -103,7 +104,7 @@ func TestUserFlow(t *testing.T) {
 
 	require.Equal(t, user.Id, userId)
 	require.Equal(t, user.Age, "39")
-	require.Equal(t, user.Level, 6)
+	require.Equal(t, user.Level, 5)
 	require.Equal(t, user.Candidate, "александр лукашенко")
 
 	reply, err = generateReplyFor(p, s, newTextCallback(t, userId, "Передумал"))
