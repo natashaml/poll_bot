@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"math/rand"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -45,7 +44,7 @@ func newTestStorage() (*Storage, error) {
 	}
 
 	return &Storage{
-		users:      sync.Map{},
+		//users:      sync.Map{},
 		persistent: persistenseStorage,
 	}, nil
 }
@@ -83,14 +82,14 @@ func TestMapStorage(t *testing.T) {
 	require.Equal(t, user.Country, "DE")
 	require.Equal(t, user.Name, "Georgy")
 
-	err = s.Persist("12")
+	err = s.Persist(user)
 	require.NoError(t, err)
 
 	count, err := s.PersistCount()
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
 
-	err = s.Persist("12")
+	err = s.Persist(user)
 	require.NoError(t, err)
 
 	count, err = s.PersistCount()
@@ -127,14 +126,14 @@ func TestRealStorage(t *testing.T) {
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Properties["age"], "16")
 
-	err = s.Persist("12")
+	err = s.Persist(user)
 	require.NoError(t, err)
 
 	count, err := s.PersistCount()
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
 
-	err = s.Persist("12")
+	err = s.Persist(user)
 	require.NoError(t, err)
 
 	count, err = s.PersistCount()

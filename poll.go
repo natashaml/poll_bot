@@ -35,7 +35,7 @@ func generateOurPoll() poll {
 	ret.add(&pollItem{
 		question: func(user *StorageUser, c *ViberCallback) string {
 			var welcome string
-			if !user.ConversationStarted {
+			if user.Properties["ConversationStarted"] != "true" {
 				if c.User.Name == "" {
 					welcome = "Добро пожаловать. "
 				} else {

@@ -2,13 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
-	"sync"
 )
 
 type Storage struct {
-	users      sync.Map
+	//users      sync.Map
 	persistent *persistenseStorage
 }
 
@@ -19,7 +17,7 @@ func newStorage() (*Storage, error) {
 	}
 
 	return &Storage{
-		users:      sync.Map{},
+		//users:      sync.Map{},
 		persistent: persistent,
 	}, nil
 }
@@ -35,8 +33,7 @@ type StorageUser struct {
 
 	Candidate string
 
-	isChanged           bool
-	ConversationStarted bool
+	isChanged bool
 }
 
 func (u *StorageUser) validate() error {
@@ -51,11 +48,11 @@ func (s *Storage) Obtain(id string) (*StorageUser, error) {
 		return nil, errors.New("Unable to obtain empty id")
 	}
 
-	user := s.fromCache(id)
-	if user != nil {
-		user.isChanged = false
-		return user, user.validate()
-	}
+	//user := s.fromCache(id)
+	//if user != nil {
+	//	user.isChanged = false
+	//	return user, user.validate()
+	//}
 	persistedUser, err := s.fromPersisted(id)
 	if err != nil {
 		return nil, err
@@ -69,20 +66,20 @@ func (s *Storage) Obtain(id string) (*StorageUser, error) {
 		Id:         id,
 		Properties: map[string]string{},
 	}
-	s.users.Store(id, newUser)
+	//s.users.Store(id, newUser)
 	newUser.isChanged = false
 
 	return newUser, newUser.validate()
 }
 
 // internal
-func (s *Storage) fromCache(id string) *StorageUser {
-	user, ok := s.users.Load(id)
-	if ok && user != nil {
-		return user.(*StorageUser)
-	}
-	return nil
-}
+//func (s *Storage) fromCache(id string) *StorageUser {
+//	user, ok := s.users.Load(id)
+//	if ok && user != nil {
+//		return user.(*StorageUser)
+//	}
+//	return nil
+//}
 
 // internal
 func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
@@ -98,7 +95,7 @@ func (s *Storage) fromPersisted(id string) (*StorageUser, error) {
 }
 
 func (s *Storage) Clear(id string) error {
-	s.users.Delete(id)
+	//s.users.Delete(id)
 
 	err := s.persistent.clear(id)
 	if err != nil {
@@ -123,15 +120,15 @@ func (s *Storage) PersistCount() (int, error) {
 	return count, nil
 }
 
-func (s *Storage) Persist(id string) error {
+func (s *Storage) Persist(user *StorageUser) error {
 	if s.persistent == nil {
 		return errors.New("persistence not enabled")
 	}
 
-	user := s.fromCache(id)
-	if user == nil {
-		return fmt.Errorf("%v missed in cache", id)
-	}
+	//user := s.fromCache(id)
+	//if user == nil {
+	//	return fmt.Errorf("%v missed in cache", id)
+	//}
 
 	err := s.persistent.save(user)
 	if err != nil {

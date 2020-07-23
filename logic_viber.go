@@ -46,7 +46,7 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 
 	defer func() {
 		if storageUser.isChanged {
-			_ = s.Persist(storageUser.Id)
+			_ = s.Persist(storageUser)
 		}
 	}()
 
@@ -84,9 +84,9 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 		return reply, nil
 	}
 
-	if !storageUser.ConversationStarted {
+	if storageUser.Properties["ConversationStarted"] != "true" {
 		reply := getViberReplyForLevel(p, storageUser, storageUser.Level, c)
-		storageUser.ConversationStarted = true
+		storageUser.Properties["ConversationStarted"] = "true"
 		storageUser.isChanged = true
 		return reply, nil
 	}
