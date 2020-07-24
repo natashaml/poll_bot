@@ -25,7 +25,7 @@ jobs:
             if [[ $CIRCLE_BRANCH == master ]] ; then
               BUILD_NUM=<< pipeline.number >>
               echo "Changing the container image with the last version (production)"
-              gcloud app deploy --project $GOOGLE_PROJECT_ID --version BUILD_NUM --no-promote
+              gcloud app deploy --project $GOOGLE_PROJECT_ID
             else echo "Not executing on a branch other than master"
             fi
 
