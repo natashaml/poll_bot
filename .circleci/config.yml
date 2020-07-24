@@ -1,3 +1,4 @@
+version: 2.1
 # Orb Dependencies
 orbs:
   gcloud: circleci/gcp-cli@1.0.6
