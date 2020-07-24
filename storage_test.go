@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/proullon/ramsql/driver"
@@ -75,15 +74,15 @@ func TestMapStorage(t *testing.T) {
 	user.Country = "DE"
 	user.Name = "Georgy"
 
+	err = s.Persist(user)
+	require.NoError(t, err)
+
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Properties["age"], "16")
 	require.Equal(t, user.Country, "DE")
 	require.Equal(t, user.Name, "Georgy")
-
-	err = s.Persist(user)
-	require.NoError(t, err)
 
 	count, err := s.PersistCount()
 	require.NoError(t, err)
@@ -105,38 +104,32 @@ func TestMapStorage(t *testing.T) {
 	require.Equal(t, user.Name, "Georgy")
 }
 
+/*
 func TestRealStorage(t *testing.T) {
 	err := godotenv.Load()
 	require.NoError(t, err)
-
 	s, err := newStorage()
 	require.NoError(t, err)
-
 	err = s.Clear("12")
 	require.NoError(t, err)
-
 	user, err := s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Properties["age"], "")
 	user.Properties["age"] = "16"
-
 	user, err = s.Obtain("12")
 	require.NoError(t, err)
 	require.Equal(t, user.Id, "12")
 	require.Equal(t, user.Properties["age"], "16")
-
 	err = s.Persist(user)
 	require.NoError(t, err)
-
 	count, err := s.PersistCount()
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
-
 	err = s.Persist(user)
 	require.NoError(t, err)
-
 	count, err = s.PersistCount()
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
 }
+*/

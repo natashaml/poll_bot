@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -11,6 +12,7 @@ func knownEvent(c *ViberCallback) bool {
 		c.Event == "delivered" ||
 		c.Event == "seen" ||
 		c.Event == "subscribed" ||
+		c.Event == "unsubscribed" ||
 		c.Event == "conversation_started" ||
 		c.Event == "webhook"
 }
@@ -58,6 +60,13 @@ func generateReplyFor(p poll, s *Storage, c *ViberCallback) (*viberReply, error)
 	if storageUser.Country == "" && c.User.Country != "" {
 		storageUser.Country = c.User.Country
 		storageUser.isChanged = true
+	}
+
+	if c.Event == "unsubscribed" {
+		storageUser.Properties["ConversationStarted"] = "false"
+		storageUser.Level = 0
+		storageUser.isChanged = true
+		return nil, nil
 	}
 
 	if c.Event == "message" {
