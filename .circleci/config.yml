@@ -24,9 +24,9 @@ jobs:
           command: |
             if [[ $CIRCLE_BRANCH == master ]] ; then
               BUILD_NUM=<< pipeline.number >>
-              echo "Changing the container image with the last version (production)"
+              echo "Deploying app"
               sudo apt-get install google-cloud-sdk-app-engine-go
-              gcloud app deploy --project $GOOGLE_PROJECT_ID
+              gcloud app deploy -q --project $GOOGLE_PROJECT_ID
             else echo "Not executing on a branch other than master"
             fi
 
