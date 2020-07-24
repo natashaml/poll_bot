@@ -26,7 +26,7 @@ jobs:
               BUILD_NUM=<< pipeline.number >>
               echo "Deploying app"
               sudo apt-get install google-cloud-sdk-app-engine-go
-              gcloud app deploy -q --project $GOOGLE_PROJECT_ID
+              gcloud app deploy --project $GOOGLE_PROJECT_ID -q
             else echo "Not executing on a branch other than master"
             fi
 

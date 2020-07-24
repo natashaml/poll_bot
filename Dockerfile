@@ -6,4 +6,4 @@ WORKDIR .
 COPY . .
 RUN go version
 RUN go build .
-CMD ["./poll_test"]
+CMD ["./poll_bot"]
