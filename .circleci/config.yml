@@ -18,6 +18,13 @@ jobs:
       - go/mod-download
       - go/save-cache
 
+      # Run tests
+      - run:
+          name: Run tests
+          command: |
+            go vet ./...
+            go test ./...
+
       # Deploy app
       - run:
           name: Deploying app
