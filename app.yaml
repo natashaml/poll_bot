@@ -1,7 +1,6 @@
-runtime: custom
+runtime: go114
 service: default
 automatic_scaling:
-  min_num_instances: 1
-  max_num_instances: 3
-env: flex
+  min_instances: 1
+  max_instances: 3
 
